@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "./dist"
+  },
+  "include": ["src/**/*.ts"],
+  "references": [{ "path": "../../packages/db" }, { "path": "../../packages/security" }, { "path": "../../packages/storage" }, { "path": "../../packages/engine-adapters" }]
+}

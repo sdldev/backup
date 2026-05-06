@@ -1,0 +1,11 @@
+{
+  "name": "@mba/api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -b"
+  },
+  "dependencies": {
+    "elysia": "^1.0.0"
+  }
+}

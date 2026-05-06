@@ -1,0 +1,11 @@
+{
+  "name": "@mba/web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -b"
+  },
+  "dependencies": {
+    "astro": "^4.16.0"
+  }
+}
