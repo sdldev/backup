@@ -1,0 +1,19 @@
+node_modules/
+dist/
+.astro/
+
+# local env
+.env
+.env.*
+!.env.example
+
+# evidence (never commit)
+.sisyphus/
+.sisyphus/evidence/
+test-results/
+
+# generated backup artifacts (never commit)
+**/*.sql
+**/*.sql.gz
+**/*.dump
+**/*.dump.gz

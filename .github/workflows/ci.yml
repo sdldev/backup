@@ -1,0 +1,40 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Test
+        run: bun test --reporter=dot
+
+      - name: Security invariants
+        run: bun run test:security
+
+      - name: Integration tests
+        run: bun run test:integration
+
+      - name: End-to-end tests
+        run: bun run test:e2e
+
+      - name: Migration rollback notes gate
+        run: bun run security:rollback-notes

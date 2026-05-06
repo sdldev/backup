@@ -1,0 +1,35 @@
+{
+  "name": "manual-backup-saas-beta",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc -b",
+    "test": "bun test --parallel 1 --max-concurrency 1",
+    "test:security": "bun run tests/security/run-security.ts --parallel 1 --max-concurrency 1",
+    "security:routes": "bun run scripts/security/check-route-inventory.ts",
+    "security:tenant-scope": "bun run scripts/security/check-tenant-scope.ts",
+    "security:object-keys": "bun run scripts/security/check-object-key-leaks.ts",
+    "security:rollback-notes": "bun run scripts/security/check-rollback-notes.ts",
+    "test:integration": "bun test --parallel 1 --max-concurrency 1 tests/integration",
+    "test:e2e": "bun test --parallel 1 --max-concurrency 1 tests/e2e",
+    "worker:reconcile": "bun run scripts/worker-reconcile.ts",
+    "db:migrate:test": "bun run scripts/db/migrate-test.ts",
+    "db:seed:test": "bun run scripts/db/seed-test.ts",
+    "db:reset:test": "bun run scripts/db/reset-test.ts"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@eslint/js": "^9.2.0",
+    "@types/bun": "^1.1.13",
+    "drizzle-kit": "^0.30.6",
+    "eslint": "^9.2.0",
+    "postgres": "^3.4.7",
+    "typescript": "^5.5.4",
+    "typescript-eslint": "^8.0.0"
+  }
+}

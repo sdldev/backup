@@ -1,0 +1,13 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./apps/api" },
+    { "path": "./apps/web" },
+    { "path": "./apps/worker" },
+    { "path": "./packages/shared" },
+    { "path": "./packages/db" },
+    { "path": "./packages/security" },
+    { "path": "./packages/storage" },
+    { "path": "./packages/engine-adapters" }
+  ]
+}
