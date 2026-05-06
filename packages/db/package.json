@@ -1,0 +1,14 @@
+{
+  "name": "@mba/db",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -b"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.39.3"
+  }
+}

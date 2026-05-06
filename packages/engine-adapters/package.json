@@ -1,0 +1,8 @@
+{
+  "name": "@mba/engine-adapters",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -b"
+  }
+}

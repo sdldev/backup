@@ -1,0 +1,8 @@
+{
+  "name": "@mba/security",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -b"
+  }
+}
