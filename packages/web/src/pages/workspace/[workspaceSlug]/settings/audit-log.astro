@@ -7,7 +7,7 @@ const workspaceResponse = await apiFetch(`/v1/workspaces/by-slug/${workspaceSlug
 
 if (workspaceResponse.status === 401) return Astro.redirect('/login');
 if (workspaceResponse.status === 404) return Astro.redirect('/app');
-if (!workspaceResponse.ok) throw new Error('Failed to load Workspace');
+if (!workspaceResponse.ok) return Astro.redirect('/login?error=load_failed');
 
 const workspacePayload = (await workspaceResponse.json()) as {
   data: { workspace: { id: string; name: string; slug: string }; membership: { role: string } };
@@ -15,7 +15,7 @@ const workspacePayload = (await workspaceResponse.json()) as {
 const { workspace, membership } = workspacePayload.data;
 
 const auditResponse = await apiFetch(`/v1/workspaces/${workspace.id}/audit-log`, Astro.request);
-if (!auditResponse.ok) throw new Error('Failed to load Audit Log');
+if (!auditResponse.ok) return Astro.redirect('/login?error=load_failed');
 
 const auditPayload = (await auditResponse.json()) as {
   data: Array<{

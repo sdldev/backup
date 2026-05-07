@@ -6,14 +6,14 @@ const { workspaceSlug, backupId } = Astro.params;
 const workspaceResponse = await apiFetch(`/v1/workspaces/by-slug/${workspaceSlug}`, Astro.request);
 if (workspaceResponse.status === 401) return Astro.redirect('/login');
 if (workspaceResponse.status === 404) return Astro.redirect('/app');
-if (!workspaceResponse.ok) throw new Error('Failed to load Workspace');
+if (!workspaceResponse.ok) return Astro.redirect('/login?error=load_failed');
 
 const workspacePayload = (await workspaceResponse.json()) as { data: { workspace: { id: string; name: string; slug: string }; membership: { role: string } } };
 const { workspace, membership } = workspacePayload.data;
 
 const backupResponse = await apiFetch(`/v1/workspaces/${workspace.id}/backups/${backupId}`, Astro.request);
 if (backupResponse.status === 404) return Astro.redirect(`/workspace/${workspace.slug}/backups`);
-if (!backupResponse.ok) throw new Error('Failed to load Backup');
+if (!backupResponse.ok) return Astro.redirect('/login?error=load_failed');
 
 const backupPayload = (await backupResponse.json()) as {
   data: {

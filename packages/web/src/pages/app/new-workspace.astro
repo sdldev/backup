@@ -8,7 +8,7 @@ import { API_BASE_URL, apiFetch } from '../../lib/api';
 
 const sessionResponse = await apiFetch('/v1/session', Astro.request);
 if (sessionResponse.status === 401) return Astro.redirect('/login');
-if (!sessionResponse.ok) throw new Error('Failed to load session');
+if (!sessionResponse.ok) return Astro.redirect('/login?error=load_failed');
 ---
 
 <DashboardShell

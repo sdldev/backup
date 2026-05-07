@@ -12,7 +12,7 @@ const response = await apiFetch(`/v1/workspaces/by-slug/${workspaceSlug}`, Astro
 
 if (response.status === 401) return Astro.redirect('/login');
 if (response.status === 404) return Astro.redirect('/app');
-if (!response.ok) throw new Error('Failed to load Workspace');
+if (!response.ok) return Astro.redirect('/login?error=load_failed');
 
 const payload = (await response.json()) as {
   data: {

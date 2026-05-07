@@ -14,8 +14,12 @@ if (response.status === 401) {
   return Astro.redirect('/login');
 }
 
+if (response.status === 503) {
+  return Astro.redirect('/login?error=api_unavailable');
+}
+
 if (!response.ok) {
-  throw new Error('Failed to load Workspaces');
+  return Astro.redirect('/login?error=workspace_load_failed');
 }
 
 const payload = (await response.json()) as {

@@ -7,7 +7,7 @@ const workspaceResponse = await apiFetch(`/v1/workspaces/by-slug/${workspaceSlug
 
 if (workspaceResponse.status === 401) return Astro.redirect('/login');
 if (workspaceResponse.status === 404) return Astro.redirect('/app');
-if (!workspaceResponse.ok) throw new Error('Failed to load Workspace');
+if (!workspaceResponse.ok) return Astro.redirect('/login?error=load_failed');
 
 const workspacePayload = (await workspaceResponse.json()) as {
   data: { workspace: { id: string; name: string; slug: string }; membership: { role: string } };
@@ -15,7 +15,7 @@ const workspacePayload = (await workspaceResponse.json()) as {
 const { workspace, membership } = workspacePayload.data;
 
 const projectsResponse = await apiFetch(`/v1/workspaces/${workspace.id}/projects`, Astro.request);
-if (!projectsResponse.ok) throw new Error('Failed to load Projects');
+if (!projectsResponse.ok) return Astro.redirect('/login?error=load_failed');
 const projectsPayload = (await projectsResponse.json()) as {
   data: Array<{ id: string; name: string; website_url: string | null }>;
 };
@@ -23,7 +23,7 @@ const project = projectsPayload.data.find((item) => item.id === projectId);
 if (!project) return Astro.redirect(`/workspace/${workspace.slug}/projects`);
 
 const sourcesResponse = await apiFetch(`/v1/workspaces/${workspace.id}/projects/${project.id}/database-sources`, Astro.request);
-if (!sourcesResponse.ok) throw new Error('Failed to load Database Sources');
+if (!sourcesResponse.ok) return Astro.redirect('/login?error=load_failed');
 const sourcesPayload = (await sourcesResponse.json()) as {
   data: Array<{
     id: string;
