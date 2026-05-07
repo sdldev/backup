@@ -37,38 +37,38 @@ const navItems = [
 
   
     <DashboardShell brandLabel="Workspace" brandName={workspace.name} sidebarNote={`${membership.role} · Project management`} navItems={navItems}>
-      <header class="topbar">
+      <header class="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
-          <p class="eyebrow">Projects</p>
+          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Projects</p>
           <h1>{workspace.name}</h1>
           <p>Group Database Sources by client, website, or application before running manual Backups.</p>
         </div>
-        <div class="actions">
-          <a class="button" href={`/workspace/${workspace.slug}`}>Dashboard</a>
+        <div class="flex flex-wrap gap-2">
+          <a class="inline-flex h-9 items-center justify-center rounded-md border bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50" href={`/workspace/${workspace.slug}`}>Dashboard</a>
         </div>
       </header>
 
-      <section class="grid grid--stats" aria-label="Project summary">
-        <article class="card stat">
-          <span class="stat__label">Projects</span>
-          <span class="stat__value">{projectsPayload.data.length}</span>
+      <section class="grid gap-4 md:grid-cols-3" aria-label="Project summary">
+        <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
+          <span class="text-sm font-medium text-muted-foreground">Projects</span>
+          <span class="block text-3xl font-semibold tracking-tight">{projectsPayload.data.length}</span>
         </article>
-        <article class="card stat">
-          <span class="stat__label">Role</span>
-          <span class="stat__value">{membership.role}</span>
+        <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
+          <span class="text-sm font-medium text-muted-foreground">Role</span>
+          <span class="block text-3xl font-semibold tracking-tight">{membership.role}</span>
         </article>
-        <article class="card stat">
-          <span class="stat__label">Create Access</span>
-          <span class="stat__value">{canCreateProject ? 'Allowed' : 'View only'}</span>
+        <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
+          <span class="text-sm font-medium text-muted-foreground">Create Access</span>
+          <span class="block text-3xl font-semibold tracking-tight">{canCreateProject ? 'Allowed' : 'View only'}</span>
         </article>
       </section>
 
-      <section class="grid grid--two" style="margin-top: 18px;">
+      <section class="grid gap-4 lg:grid-cols-2" class="mt-6">
         {
           canCreateProject ? (
-            <article class="card">
+            <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
               <h2>Create Project</h2>
-              <form id="project-form" class="form-grid">
+              <form id="project-form" class="grid gap-4">
                 <label>
                   Project name
                   <input name="name" required maxlength="120" placeholder="Client website or app name" />
@@ -77,19 +77,19 @@ const navItems = [
                   Website URL optional
                   <input name="website_url" maxlength="300" inputmode="url" placeholder="https://example.com" />
                 </label>
-                <button class="button button--primary" type="submit">Create Project</button>
+                <button class="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50" type="submit">Create Project</button>
               </form>
               <p id="form-message" role="status"></p>
             </article>
           ) : (
-            <article class="card card--soft">
+            <article class="rounded-xl border bg-muted/30 p-5 text-card-foreground shadow-sm">
               <h2>View-only access</h2>
               <p>Workspace Members can view Projects but cannot create them.</p>
             </article>
           )
         }
 
-        <article class="card">
+        <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
           <h2>Project list</h2>
           {
             projectsPayload.data.length === 0 ? (
@@ -98,16 +98,16 @@ const navItems = [
                 <p>Create Project before adding Database Sources.</p>
               </div>
             ) : (
-              <ul class="list">
+              <ul class="grid gap-3">
                 {projectsPayload.data.map((project) => (
-                  <li class="list-item">
+                  <li class="flex items-center justify-between gap-4 rounded-lg border p-3">
                     <div>
                       <a href={`/workspace/${workspace.slug}/projects/${project.id}`}>
                         <strong>{project.name}</strong>
                       </a>
                       {project.website_url ? <p>{project.website_url}</p> : <p>No website URL</p>}
                     </div>
-                    <a class="button" href={`/workspace/${workspace.slug}/projects/${project.id}`}>Open</a>
+                    <a class="inline-flex h-9 items-center justify-center rounded-md border bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50" href={`/workspace/${workspace.slug}/projects/${project.id}`}>Open</a>
                   </li>
                 ))}
               </ul>

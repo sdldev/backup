@@ -56,38 +56,38 @@ const navItems = [
 
   
     <DashboardShell brandLabel="Project" brandName={project.name} sidebarNote={`${membership.role} · Database Sources`} navItems={navItems}>
-        <header class="topbar">
+        <header class="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <p class="eyebrow">Database Sources</p>
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Database Sources</p>
             <h1>{project.name}</h1>
             <p>{project.website_url ? project.website_url : 'Configure Source connections before running manual Backups.'}</p>
           </div>
-          <div class="actions">
-            <a class="button" href={`/workspace/${workspace.slug}/projects`}>All Projects</a>
-            <a class="button" href={`/workspace/${workspace.slug}`}>Dashboard</a>
+          <div class="flex flex-wrap gap-2">
+            <a class="inline-flex h-9 items-center justify-center rounded-md border bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50" href={`/workspace/${workspace.slug}/projects`}>All Projects</a>
+            <a class="inline-flex h-9 items-center justify-center rounded-md border bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50" href={`/workspace/${workspace.slug}`}>Dashboard</a>
           </div>
         </header>
 
-        <section class="grid grid--stats" aria-label="Database Source summary">
-          <article class="card stat">
-            <span class="stat__label">Sources</span>
-            <span class="stat__value">{sourcesPayload.data.length}</span>
+        <section class="grid gap-4 md:grid-cols-3" aria-label="Database Source summary">
+          <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
+            <span class="text-sm font-medium text-muted-foreground">Sources</span>
+            <span class="block text-3xl font-semibold tracking-tight">{sourcesPayload.data.length}</span>
           </article>
-          <article class="card stat">
-            <span class="stat__label">Enabled</span>
-            <span class="stat__value">{enabledSourceCount}</span>
+          <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
+            <span class="text-sm font-medium text-muted-foreground">Enabled</span>
+            <span class="block text-3xl font-semibold tracking-tight">{enabledSourceCount}</span>
           </article>
-          <article class="card stat">
-            <span class="stat__label">Healthy</span>
-            <span class="stat__value">{healthySourceCount}</span>
+          <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
+            <span class="text-sm font-medium text-muted-foreground">Healthy</span>
+            <span class="block text-3xl font-semibold tracking-tight">{healthySourceCount}</span>
           </article>
         </section>
 
-        <section class="grid grid--two" style="margin-top: 18px;">
-          <article class="card">
+        <section class="grid gap-4 lg:grid-cols-2" class="mt-6">
+          <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
             <h2>Add disabled draft Source</h2>
             <p>Save encrypted credentials, test connection, then enable Source before running Backups.</p>
-            <form id="source-form" class="form-grid">
+            <form id="source-form" class="grid gap-4">
               <label>
                 Engine
                 <select name="engine">
@@ -131,12 +131,12 @@ const navItems = [
                 Retention days
                 <input name="retention_days" required type="number" min="7" max="30" value="7" />
               </label>
-              <button class="button button--primary" type="submit">Save disabled draft</button>
+              <button class="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50" type="submit">Save disabled draft</button>
             </form>
             <p id="form-message" role="status"></p>
           </article>
 
-          <article class="card">
+          <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
             <h2>Database Source list</h2>
             {
               sourcesPayload.data.length === 0 ? (
@@ -145,25 +145,25 @@ const navItems = [
                   <p>Add Source, test connection, enable it, then run first manual Backup.</p>
                 </div>
               ) : (
-                <ul class="list">
+                <ul class="grid gap-3">
                   {sourcesPayload.data.map((source) => (
-                    <li class="list-item">
+                    <li class="flex items-center justify-between gap-4 rounded-lg border p-3">
                       <div>
                         <strong>{source.display_name}</strong>
                         <p>
                           {source.engine} · {source.host}:{source.port} · retention {source.retention_days} days
                         </p>
-                        <div class="actions">
-                          <span class={`badge ${source.state === 'enabled' ? 'badge--ok' : 'badge--warn'}`}>{source.state}</span>
-                          <span class={`badge ${source.health === 'healthy' ? 'badge--ok' : 'badge--warn'}`}>{source.health}</span>
-                          <span class="badge">credential {source.has_saved_credential ? 'saved' : 'missing'}</span>
+                        <div class="flex flex-wrap gap-2">
+                          <span class={`inline-flex rounded-md px-2.5 py-0.5 text-xs font-semibold text-white ${source.state === 'enabled' ? 'bg-emerald-500' : 'bg-amber-500'}`}>{source.state}</span>
+                          <span class={`inline-flex rounded-md px-2.5 py-0.5 text-xs font-semibold text-white ${source.health === 'healthy' ? 'bg-emerald-500' : 'bg-amber-500'}`}>{source.health}</span>
+                          <span class="inline-flex rounded-md border bg-secondary px-2.5 py-0.5 text-xs font-semibold text-secondary-foreground">credential {source.has_saved_credential ? 'saved' : 'missing'}</span>
                         </div>
                       </div>
-                      <div class="actions">
-                        <button class="button" type="button" data-test-source={source.id}>Test</button>
-                        <button class="button" type="button" data-enable-source={source.id}>Enable</button>
-                        <button class="button" type="button" data-disable-source={source.id}>Disable</button>
-                        <button class="button button--primary" type="button" data-run-backup={source.id}>Run Backup</button>
+                      <div class="flex flex-wrap gap-2">
+                        <button class="inline-flex h-9 items-center justify-center rounded-md border bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50" type="button" data-test-source={source.id}>Test</button>
+                        <button class="inline-flex h-9 items-center justify-center rounded-md border bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50" type="button" data-enable-source={source.id}>Enable</button>
+                        <button class="inline-flex h-9 items-center justify-center rounded-md border bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50" type="button" data-disable-source={source.id}>Disable</button>
+                        <button class="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50" type="button" data-run-backup={source.id}>Run Backup</button>
                       </div>
                     </li>
                   ))}

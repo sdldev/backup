@@ -42,37 +42,37 @@ const navItems = [
 
   
     <DashboardShell brandLabel="Workspace" brandName={workspace.name} sidebarNote={`${membership.role} · Backup detail`} navItems={navItems}>
-        <header class="topbar">
+        <header class="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <p class="eyebrow">Backup detail</p>
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Backup detail</p>
             <h1>{backup.download_filename}</h1>
             <p>Download uses a short-lived, session-bound, single-use token.</p>
           </div>
-          <div class="actions">
-            <a class="button" href={`/workspace/${workspace.slug}/backups`}>All Backups</a>
-            <button class="button button--primary" type="button" id="download-backup" disabled={backup.status !== 'succeeded'}>Download</button>
-            <button class="button" type="button" id="delete-backup" disabled={!canDelete || backup.status !== 'succeeded'}>Delete</button>
+          <div class="flex flex-wrap gap-2">
+            <a class="inline-flex h-9 items-center justify-center rounded-md border bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50" href={`/workspace/${workspace.slug}/backups`}>All Backups</a>
+            <button class="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50" type="button" id="download-backup" disabled={backup.status !== 'succeeded'}>Download</button>
+            <button class="inline-flex h-9 items-center justify-center rounded-md border bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50" type="button" id="delete-backup" disabled={!canDelete || backup.status !== 'succeeded'}>Delete</button>
           </div>
         </header>
 
-        <section class="grid grid--stats" aria-label="Backup summary">
-          <article class="card stat">
-            <span class="stat__label">Status</span>
-            <span class="stat__value">{backup.status}</span>
-            <span class={`badge ${backup.status === 'succeeded' ? 'badge--ok' : 'badge--warn'}`}>{backup.status}</span>
+        <section class="grid gap-4 md:grid-cols-3" aria-label="Backup summary">
+          <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
+            <span class="text-sm font-medium text-muted-foreground">Status</span>
+            <span class="block text-3xl font-semibold tracking-tight">{backup.status}</span>
+            <span class={`inline-flex rounded-md px-2.5 py-0.5 text-xs font-semibold text-white ${backup.status === 'succeeded' ? 'bg-emerald-500' : 'bg-amber-500'}`}>{backup.status}</span>
           </article>
-          <article class="card stat">
-            <span class="stat__label">Encrypted Size</span>
-            <span class="stat__value">{formatBytes(backup.encrypted_size_bytes)}</span>
+          <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
+            <span class="text-sm font-medium text-muted-foreground">Encrypted Size</span>
+            <span class="block text-3xl font-semibold tracking-tight">{formatBytes(backup.encrypted_size_bytes)}</span>
           </article>
-          <article class="card stat">
-            <span class="stat__label">Original Size</span>
-            <span class="stat__value">{formatBytes(backup.original_size_bytes)}</span>
+          <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
+            <span class="text-sm font-medium text-muted-foreground">Original Size</span>
+            <span class="block text-3xl font-semibold tracking-tight">{formatBytes(backup.original_size_bytes)}</span>
           </article>
         </section>
 
-        <section class="grid grid--two" style="margin-top: 18px;">
-          <article class="card">
+        <section class="grid gap-4 lg:grid-cols-2" class="mt-6">
+          <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
             <h2>Artifact metadata</h2>
             <dl class="detail-list">
               <dt>Format</dt>
@@ -87,13 +87,13 @@ const navItems = [
             <p id="download-message" role="status"></p>
           </article>
 
-          <article class="card card--soft">
+          <article class="rounded-xl border bg-muted/30 p-5 text-card-foreground shadow-sm">
             <h2>Security notes</h2>
-            <ul class="list">
-              <li class="list-item">Object key and checksum are not exposed in UI.</li>
-              <li class="list-item">Download token expires in 15 minutes.</li>
-              <li class="list-item">Download token is bound to current User Account and session.</li>
-              <li class="list-item">Backup delete is Owner/Admin only.</li>
+            <ul class="grid gap-3">
+              <li class="flex items-center justify-between gap-4 rounded-lg border p-3">Object key and checksum are not exposed in UI.</li>
+              <li class="flex items-center justify-between gap-4 rounded-lg border p-3">Download token expires in 15 minutes.</li>
+              <li class="flex items-center justify-between gap-4 rounded-lg border p-3">Download token is bound to current User Account and session.</li>
+              <li class="flex items-center justify-between gap-4 rounded-lg border p-3">Backup delete is Owner/Admin only.</li>
             </ul>
           </article>
         </section>

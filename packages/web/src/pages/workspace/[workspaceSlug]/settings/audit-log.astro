@@ -43,33 +43,33 @@ const navItems = [
 
   
     <DashboardShell brandLabel="Workspace" brandName={workspace.name} sidebarNote={`${membership.role} · Security events`} navItems={navItems}>
-        <header class="topbar">
+        <header class="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <p class="eyebrow">Workspace settings</p>
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Workspace settings</p>
             <h1>Audit Log</h1>
             <p>Review security and data-access events. Sensitive metadata is redacted before storage.</p>
           </div>
-          <div class="actions">
-            <a class="button" href={`/workspace/${workspace.slug}`}>Dashboard</a>
+          <div class="flex flex-wrap gap-2">
+            <a class="inline-flex h-9 items-center justify-center rounded-md border bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50" href={`/workspace/${workspace.slug}`}>Dashboard</a>
           </div>
         </header>
 
-        <section class="grid grid--stats" aria-label="Audit summary">
-          <article class="card stat">
-            <span class="stat__label">Events</span>
-            <span class="stat__value">{auditPayload.data.length}</span>
+        <section class="grid gap-4 md:grid-cols-3" aria-label="Audit summary">
+          <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
+            <span class="text-sm font-medium text-muted-foreground">Events</span>
+            <span class="block text-3xl font-semibold tracking-tight">{auditPayload.data.length}</span>
           </article>
-          <article class="card stat">
-            <span class="stat__label">User Actor Events</span>
-            <span class="stat__value">{userEventCount}</span>
+          <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
+            <span class="text-sm font-medium text-muted-foreground">User Actor Events</span>
+            <span class="block text-3xl font-semibold tracking-tight">{userEventCount}</span>
           </article>
-          <article class="card stat">
-            <span class="stat__label">Resource Types</span>
-            <span class="stat__value">{resourceTypeCount}</span>
+          <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
+            <span class="text-sm font-medium text-muted-foreground">Resource Types</span>
+            <span class="block text-3xl font-semibold tracking-tight">{resourceTypeCount}</span>
           </article>
         </section>
 
-        <section class="card" style="margin-top: 18px;">
+        <section class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm" class="mt-6">
           <h2>Latest events</h2>
           {
             auditPayload.data.length === 0 ? (
@@ -78,15 +78,15 @@ const navItems = [
                 <p>Security events will appear here after Workspace actions occur.</p>
               </div>
             ) : (
-              <ol class="list">
+              <ol class="grid gap-3">
                 {auditPayload.data.map((event) => (
-                  <li class="list-item">
+                  <li class="flex items-center justify-between gap-4 rounded-lg border p-3">
                     <div>
                       <strong>{event.event_type}</strong>
                       <p>{event.created_at} · {event.actor.type} · {event.resource_type}</p>
                       <pre class="metadata-block">{JSON.stringify(event.metadata, null, 2)}</pre>
                     </div>
-                    <span class="badge">{event.resource_type}</span>
+                    <span class="inline-flex rounded-md border bg-secondary px-2.5 py-0.5 text-xs font-semibold text-secondary-foreground">{event.resource_type}</span>
                   </li>
                 ))}
               </ol>
