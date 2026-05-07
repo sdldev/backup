@@ -39,14 +39,13 @@ services:
     build:
       context: .
       dockerfile: packages/web/Dockerfile
-    working_dir: /workspace
-    command: bun --filter @backup-saas/web dev
+      target: runtime
     env_file: .env
     environment:
       PUBLIC_API_BASE_URL: http://localhost:8080
       INTERNAL_API_BASE_URL: http://app:3000
-    volumes:
-      - .:/workspace
+      HOST: 0.0.0.0
+      PORT: "4321"
     ports:
       - "4321:4321"
     depends_on:
