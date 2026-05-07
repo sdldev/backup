@@ -1,5 +1,15 @@
 ---
 import DashboardShell from '../../../../components/DashboardShell.astro';
+import EmptyState from '../../../../components/dashboard/EmptyState.astro';
+import FormSection from '../../../../components/dashboard/FormSection.astro';
+import PageHeader from '../../../../components/dashboard/PageHeader.astro';
+import StatCard from '../../../../components/dashboard/StatCard.astro';
+import { Badge } from '../../../../components/ui/badge';
+import { Button } from '../../../../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../../components/ui/card';
+import { Field, FieldGroup, FieldLabel } from '../../../../components/ui/field';
+import { Input } from '../../../../components/ui/input';
+import { Select } from '../../../../components/ui/select';
 import { buildWorkspaceNavGroups } from '../../../../lib/dashboard-nav';
 import { apiFetch, API_BASE_URL } from '../../../../lib/api';
 
@@ -47,217 +57,206 @@ const enabledSourceCount = sourcesPayload.data.filter((source) => source.state =
 const healthySourceCount = sourcesPayload.data.filter((source) => source.health === 'healthy').length;
 ---
 
+<DashboardShell brandLabel="Workspace" brandName={workspace.name} pageTitle={project.name} sidebarNote={`${membership.role} · Database Sources`} navGroups={buildWorkspaceNavGroups(workspace.slug, Astro.url.pathname)}>
+  <PageHeader eyebrow="Database Sources" title={project.name} description={project.website_url ? project.website_url : 'Configure Source connections before running manual Backups.'}>
+    <Button slot="actions" asChild variant="outline"><a href={`/workspace/${workspace.slug}/projects`}>All Projects</a></Button>
+    <Button slot="actions" asChild variant="outline"><a href={`/workspace/${workspace.slug}`}>Dashboard</a></Button>
+  </PageHeader>
 
-  
-    <DashboardShell brandLabel="Workspace" brandName={workspace.name} pageTitle={project.name} sidebarNote={`${membership.role} · Database Sources`} navGroups={buildWorkspaceNavGroups(workspace.slug, Astro.url.pathname)}>
-        <header class="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Database Sources</p>
-            <h1>{project.name}</h1>
-            <p>{project.website_url ? project.website_url : 'Configure Source connections before running manual Backups.'}</p>
-          </div>
-          <div class="flex flex-wrap gap-2">
-            <a class="inline-flex h-9 items-center justify-center rounded-md border bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50" href={`/workspace/${workspace.slug}/projects`}>All Projects</a>
-            <a class="inline-flex h-9 items-center justify-center rounded-md border bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50" href={`/workspace/${workspace.slug}`}>Dashboard</a>
-          </div>
-        </header>
+  <section class="grid gap-4 md:grid-cols-3" aria-label="Database Source summary">
+    <StatCard label="Sources" value={sourcesPayload.data.length} />
+    <StatCard label="Enabled" value={enabledSourceCount} />
+    <StatCard label="Healthy" value={healthySourceCount} />
+  </section>
 
-        <section class="grid gap-4 md:grid-cols-3" aria-label="Database Source summary">
-          <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
-            <span class="text-sm font-medium text-muted-foreground">Sources</span>
-            <span class="block text-3xl font-semibold tracking-tight">{sourcesPayload.data.length}</span>
-          </article>
-          <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
-            <span class="text-sm font-medium text-muted-foreground">Enabled</span>
-            <span class="block text-3xl font-semibold tracking-tight">{enabledSourceCount}</span>
-          </article>
-          <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
-            <span class="text-sm font-medium text-muted-foreground">Healthy</span>
-            <span class="block text-3xl font-semibold tracking-tight">{healthySourceCount}</span>
-          </article>
-        </section>
+  <section class="mt-6 grid gap-4 lg:grid-cols-2">
+    <FormSection title="Add disabled draft Source" description="Save encrypted credentials, test connection, then enable Source before running Backups.">
+      <form id="source-form" class="flex flex-col gap-4">
+        <FieldGroup>
+          <Field>
+            <FieldLabel htmlFor="source-engine">Engine</FieldLabel>
+            <Select id="source-engine" name="engine">
+              <option value="mysql">MySQL/MariaDB</option>
+              <option value="postgresql">PostgreSQL</option>
+            </Select>
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="source-display-name">Display name</FieldLabel>
+            <Input id="source-display-name" name="display_name" required maxLength={120} placeholder="Production database" />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="source-technical-database-name">Technical database name</FieldLabel>
+            <Input id="source-technical-database-name" name="technical_database_name" required maxLength={120} />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="source-host">Host</FieldLabel>
+            <Input id="source-host" name="host" required maxLength={255} placeholder="db.example.com" />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="source-port">Port</FieldLabel>
+            <Input id="source-port" name="port" required type="number" min={1} max={65535} value="3306" />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="source-username">Username</FieldLabel>
+            <Input id="source-username" name="username" required maxLength={120} />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="source-password">Password</FieldLabel>
+            <Input id="source-password" name="password" type="password" autoComplete="new-password" />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="source-ssl-mode">SSL mode</FieldLabel>
+            <Select id="source-ssl-mode" name="ssl_mode">
+              <option value="require">Require TLS</option>
+              <option value="prefer">Prefer TLS</option>
+              <option value="disable">Disable TLS</option>
+            </Select>
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="source-retention-days">Retention days</FieldLabel>
+            <Input id="source-retention-days" name="retention_days" required type="number" min={7} max={30} value="7" />
+          </Field>
+        </FieldGroup>
+        <Button type="submit">Save disabled draft</Button>
+      </form>
+      <p id="form-message" class="mt-4 text-sm text-muted-foreground" role="status"></p>
+    </FormSection>
 
-        <section class="mt-6 grid gap-4 lg:grid-cols-2">
-          <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
-            <h2>Add disabled draft Source</h2>
-            <p>Save encrypted credentials, test connection, then enable Source before running Backups.</p>
-            <form id="source-form" class="grid gap-4">
-              <label>
-                Engine
-                <select name="engine">
-                  <option value="mysql">MySQL/MariaDB</option>
-                  <option value="postgresql">PostgreSQL</option>
-                </select>
-              </label>
-              <label>
-                Display name
-                <input name="display_name" required maxlength="120" placeholder="Production database" />
-              </label>
-              <label>
-                Technical database name
-                <input name="technical_database_name" required maxlength="120" />
-              </label>
-              <label>
-                Host
-                <input name="host" required maxlength="255" placeholder="db.example.com" />
-              </label>
-              <label>
-                Port
-                <input name="port" required type="number" min="1" max="65535" value="3306" />
-              </label>
-              <label>
-                Username
-                <input name="username" required maxlength="120" />
-              </label>
-              <label>
-                Password
-                <input name="password" type="password" autocomplete="new-password" />
-              </label>
-              <label>
-                SSL mode
-                <select name="ssl_mode">
-                  <option value="require">Require TLS</option>
-                  <option value="prefer">Prefer TLS</option>
-                  <option value="disable">Disable TLS</option>
-                </select>
-              </label>
-              <label>
-                Retention days
-                <input name="retention_days" required type="number" min="7" max="30" value="7" />
-              </label>
-              <button class="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50" type="submit">Save disabled draft</button>
-            </form>
-            <p id="form-message" role="status"></p>
-          </article>
-
-          <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
-            <h2>Database Source list</h2>
-            {
-              sourcesPayload.data.length === 0 ? (
-                <div class="empty">
-                  <h2>No Database Source yet</h2>
-                  <p>Add Source, test connection, enable it, then run first manual Backup.</p>
-                </div>
-              ) : (
-                <ul class="grid gap-3">
-                  {sourcesPayload.data.map((source) => (
-                    <li class="flex items-center justify-between gap-4 rounded-lg border p-3">
-                      <div>
-                        <strong>{source.display_name}</strong>
-                        <p>
-                          {source.engine} · {source.host}:{source.port} · retention {source.retention_days} days
-                        </p>
-                        <div class="flex flex-wrap gap-2">
-                          <span class={`inline-flex rounded-md px-2.5 py-0.5 text-xs font-semibold text-white ${source.state === 'enabled' ? 'bg-emerald-500' : 'bg-amber-500'}`}>{source.state}</span>
-                          <span class={`inline-flex rounded-md px-2.5 py-0.5 text-xs font-semibold text-white ${source.health === 'healthy' ? 'bg-emerald-500' : 'bg-amber-500'}`}>{source.health}</span>
-                          <span class="inline-flex rounded-md border bg-secondary px-2.5 py-0.5 text-xs font-semibold text-secondary-foreground">credential {source.has_saved_credential ? 'saved' : 'missing'}</span>
-                        </div>
-                      </div>
-                      <div class="flex flex-wrap gap-2">
-                        <button class="inline-flex h-9 items-center justify-center rounded-md border bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50" type="button" data-test-source={source.id}>Test</button>
-                        <button class="inline-flex h-9 items-center justify-center rounded-md border bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50" type="button" data-enable-source={source.id}>Enable</button>
-                        <button class="inline-flex h-9 items-center justify-center rounded-md border bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50" type="button" data-disable-source={source.id}>Disable</button>
-                        <button class="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50" type="button" data-run-backup={source.id}>Run Backup</button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )
-            }
-          </article>
-        </section>
-    </DashboardShell>
-
-    <script is:inline define:vars={{ apiBaseUrl: API_BASE_URL, workspaceId: workspace.id, projectId: project.id, workspaceSlug: workspace.slug }}>
-      const form = document.getElementById('source-form');
-      const message = document.getElementById('form-message');
-
-      document.querySelectorAll('[data-test-source]').forEach((button) => {
-        button.addEventListener('click', async () => {
-          message.textContent = 'Testing Database Source...';
-          const sourceId = button.getAttribute('data-test-source');
-          const response = await fetch(
-            `${apiBaseUrl}/v1/workspaces/${workspaceId}/projects/${projectId}/database-sources/${sourceId}/test-connection`,
-            { method: 'POST', credentials: 'include' },
-          );
-          const payload = await response.json();
-          message.textContent = response.ok
-            ? payload.data.test.user_error_message
-            : payload.error?.message ?? 'Connection test failed';
-        });
-      });
-
-      async function postSourceAction(sourceId, action) {
-        message.textContent = `${action} Database Source...`;
-        const response = await fetch(
-          `${apiBaseUrl}/v1/workspaces/${workspaceId}/projects/${projectId}/database-sources/${sourceId}/${action}`,
-          { method: 'POST', credentials: 'include' },
-        );
-        const payload = await response.json();
-        if (!response.ok) {
-          message.textContent = payload.error?.message ?? `Database Source ${action} failed`;
-          return;
+    <Card>
+      <CardHeader>
+        <CardTitle>Database Source list</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {
+          sourcesPayload.data.length === 0 ? (
+            <EmptyState title="No Database Source yet" description="Add Source, test connection, enable it, then run first manual Backup." />
+          ) : (
+            <ul class="grid gap-3">
+              {sourcesPayload.data.map((source) => (
+                <li class="flex flex-col justify-between gap-4 rounded-lg border p-3 xl:flex-row xl:items-center">
+                  <div class="min-w-0">
+                    <strong>{source.display_name}</strong>
+                    <p class="text-sm text-muted-foreground">
+                      {source.engine} · {source.host}:{source.port} · retention {source.retention_days} days
+                    </p>
+                    <div class="mt-2 flex flex-wrap gap-2">
+                      <Badge variant="secondary">{source.state}</Badge>
+                      <Badge variant="secondary">{source.health}</Badge>
+                      <Badge variant="outline">credential {source.has_saved_credential ? 'saved' : 'missing'}</Badge>
+                    </div>
+                  </div>
+                  <div class="flex flex-wrap gap-2">
+                    <Button type="button" variant="outline" data-test-source={source.id}>Test</Button>
+                    <Button type="button" variant="outline" data-enable-source={source.id}>Enable</Button>
+                    <Button type="button" variant="outline" data-disable-source={source.id}>Disable</Button>
+                    <Button type="button" data-run-backup={source.id}>Run Backup</Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )
         }
-        window.location.reload();
+      </CardContent>
+    </Card>
+  </section>
+</DashboardShell>
+
+<script is:inline define:vars={{ apiBaseUrl: API_BASE_URL, workspaceId: workspace.id, projectId: project.id, workspaceSlug: workspace.slug }}>
+  const form = document.getElementById('source-form');
+  const message = document.getElementById('form-message');
+
+  document.querySelectorAll('[data-test-source]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      message.textContent = 'Testing Database Source...';
+      message.classList.remove('text-destructive');
+      const sourceId = button.getAttribute('data-test-source');
+      const response = await fetch(
+        `${apiBaseUrl}/v1/workspaces/${workspaceId}/projects/${projectId}/database-sources/${sourceId}/test-connection`,
+        { method: 'POST', credentials: 'include' },
+      );
+      const payload = await response.json();
+      message.textContent = response.ok
+        ? payload.data.test.user_error_message
+        : payload.error?.message ?? 'Connection test failed';
+      if (!response.ok) message.classList.add('text-destructive');
+    });
+  });
+
+  async function postSourceAction(sourceId, action) {
+    message.textContent = `${action} Database Source...`;
+    message.classList.remove('text-destructive');
+    const response = await fetch(
+      `${apiBaseUrl}/v1/workspaces/${workspaceId}/projects/${projectId}/database-sources/${sourceId}/${action}`,
+      { method: 'POST', credentials: 'include' },
+    );
+    const payload = await response.json();
+    if (!response.ok) {
+      message.textContent = payload.error?.message ?? `Database Source ${action} failed`;
+      message.classList.add('text-destructive');
+      return;
+    }
+    window.location.reload();
+  }
+
+  document.querySelectorAll('[data-enable-source]').forEach((button) => {
+    button.addEventListener('click', () => postSourceAction(button.getAttribute('data-enable-source'), 'enable'));
+  });
+
+  document.querySelectorAll('[data-disable-source]').forEach((button) => {
+    button.addEventListener('click', () => postSourceAction(button.getAttribute('data-disable-source'), 'disable'));
+  });
+
+  document.querySelectorAll('[data-run-backup]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      message.textContent = 'Queueing Backup Job...';
+      message.classList.remove('text-destructive');
+      const sourceId = button.getAttribute('data-run-backup');
+      const response = await fetch(`${apiBaseUrl}/v1/workspaces/${workspaceId}/database-sources/${sourceId}/backup-jobs`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      const payload = await response.json();
+      if (!response.ok) {
+        message.textContent = payload.error?.message ?? 'Backup Job could not be queued';
+        message.classList.add('text-destructive');
+        return;
       }
+      window.location.href = `/workspace/${workspaceSlug}/backup-jobs/${payload.data.id}`;
+    });
+  });
 
-      document.querySelectorAll('[data-enable-source]').forEach((button) => {
-        button.addEventListener('click', () => postSourceAction(button.getAttribute('data-enable-source'), 'enable'));
-      });
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    message.textContent = 'Saving Database Source...';
+    message.classList.remove('text-destructive');
 
-      document.querySelectorAll('[data-disable-source]').forEach((button) => {
-        button.addEventListener('click', () => postSourceAction(button.getAttribute('data-disable-source'), 'disable'));
-      });
+    const formData = new FormData(form);
+    const body = {
+      engine: String(formData.get('engine') ?? 'mysql'),
+      display_name: String(formData.get('display_name') ?? ''),
+      technical_database_name: String(formData.get('technical_database_name') ?? ''),
+      host: String(formData.get('host') ?? ''),
+      port: Number(formData.get('port') ?? 3306),
+      username: String(formData.get('username') ?? ''),
+      password: String(formData.get('password') ?? '') || undefined,
+      ssl_mode: String(formData.get('ssl_mode') ?? 'require'),
+      retention_days: Number(formData.get('retention_days') ?? 7),
+    };
 
-      document.querySelectorAll('[data-run-backup]').forEach((button) => {
-        button.addEventListener('click', async () => {
-          message.textContent = 'Queueing Backup Job...';
-          const sourceId = button.getAttribute('data-run-backup');
-          const response = await fetch(`${apiBaseUrl}/v1/workspaces/${workspaceId}/database-sources/${sourceId}/backup-jobs`, {
-            method: 'POST',
-            credentials: 'include',
-          });
-          const payload = await response.json();
-          if (!response.ok) {
-            message.textContent = payload.error?.message ?? 'Backup Job could not be queued';
-            return;
-          }
-          window.location.href = `/workspace/${workspaceSlug}/backup-jobs/${payload.data.id}`;
-        });
-      });
+    const response = await fetch(`${apiBaseUrl}/v1/workspaces/${workspaceId}/projects/${projectId}/database-sources`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
 
-      form?.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        message.textContent = 'Saving Database Source...';
+    const payload = await response.json();
+    if (!response.ok) {
+      message.textContent = payload.error?.message ?? 'Database Source could not be saved';
+      message.classList.add('text-destructive');
+      return;
+    }
 
-        const formData = new FormData(form);
-        const body = {
-          engine: String(formData.get('engine') ?? 'mysql'),
-          display_name: String(formData.get('display_name') ?? ''),
-          technical_database_name: String(formData.get('technical_database_name') ?? ''),
-          host: String(formData.get('host') ?? ''),
-          port: Number(formData.get('port') ?? 3306),
-          username: String(formData.get('username') ?? ''),
-          password: String(formData.get('password') ?? '') || undefined,
-          ssl_mode: String(formData.get('ssl_mode') ?? 'require'),
-          retention_days: Number(formData.get('retention_days') ?? 7),
-        };
-
-        const response = await fetch(`${apiBaseUrl}/v1/workspaces/${workspaceId}/projects/${projectId}/database-sources`, {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify(body),
-        });
-
-        const payload = await response.json();
-        if (!response.ok) {
-          message.textContent = payload.error?.message ?? 'Database Source could not be saved';
-          return;
-        }
-
-        window.location.reload();
-      });
-    </script>
-  
-
+    window.location.reload();
+  });
+</script>
