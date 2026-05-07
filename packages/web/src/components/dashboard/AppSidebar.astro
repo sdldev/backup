@@ -1,0 +1,37 @@
+---
+type NavItem = { href: string; label: string; active?: boolean };
+const { brandLabel, brandName, navItems, sidebarNote } = Astro.props as {
+  brandLabel: string;
+  brandName: string;
+  navItems: NavItem[];
+  sidebarNote: string;
+};
+---
+
+<aside class="border-r bg-card text-card-foreground md:sticky md:top-0 md:h-screen">
+  <div class="flex h-full flex-col gap-6 p-4">
+    <a class="grid gap-0.5 rounded-lg px-2 py-1" href="/app">
+      <span class="text-[11px] font-bold uppercase tracking-[0.22em] text-primary">{brandLabel}</span>
+      <span class="truncate text-lg font-semibold tracking-tight">{brandName}</span>
+    </a>
+    <nav class="grid gap-1" aria-label="Dashboard">
+      {navItems.map((item) => (
+        <a
+          class="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground data-[active=true]:bg-primary data-[active=true]:text-primary-foreground"
+          data-active={item.active ? 'true' : 'false'}
+          href={item.href}
+        >
+          {item.label}
+        </a>
+      ))}
+    </nav>
+    <p class="mt-auto rounded-lg border bg-muted/40 p-3 text-xs leading-5 text-muted-foreground">{sidebarNote}</p>
+    <button
+      class="rounded-md px-3 py-2 text-left text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+      type="button"
+      data-logout
+    >
+      Logout
+    </button>
+  </div>
+</aside>

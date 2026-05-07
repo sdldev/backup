@@ -1,5 +1,8 @@
 ---
+import '../styles/globals.css';
 import { API_BASE_URL } from '../lib/api';
+import AppSidebar from './dashboard/AppSidebar.astro';
+import DashboardHeader from './dashboard/DashboardHeader.astro';
 
 type NavItem = {
   href: string;
@@ -7,12 +10,7 @@ type NavItem = {
   active?: boolean;
 };
 
-const {
-  brandLabel,
-  brandName,
-  navItems,
-  sidebarNote,
-} = Astro.props as {
+const { brandLabel, brandName, navItems, sidebarNote } = Astro.props as {
   brandLabel: string;
   brandName: string;
   navItems: NavItem[];
@@ -20,22 +18,14 @@ const {
 };
 ---
 
-<div class="dashboard-shell">
-  <aside class="sidebar">
-    <a class="brand" href="/app">
-      <span class="brand__label">{brandLabel}</span>
-      <span class="brand__name">{brandName}</span>
-    </a>
-    <nav class="nav-list" aria-label="Dashboard">
-      {navItems.map((item) => <a class={`nav-link ${item.active ? 'is-active' : ''}`} href={item.href}>{item.label}</a>)}
-    </nav>
-    <p class="sidebar-note">{sidebarNote}</p>
-    <button class="nav-link logout-button" type="button" data-logout>Logout</button>
-  </aside>
-
-  <main class="dashboard-main">
-    <slot />
-  </main>
+<div class="min-h-screen bg-background text-foreground md:grid md:grid-cols-[260px_1fr]">
+  <AppSidebar brandLabel={brandLabel} brandName={brandName} navItems={navItems} sidebarNote={sidebarNote} />
+  <div class="min-w-0">
+    <DashboardHeader />
+    <main class="mx-auto w-full max-w-7xl p-4 md:p-6 lg:p-8">
+      <slot />
+    </main>
+  </div>
 </div>
 
 <script is:inline define:vars={{ apiBaseUrl: API_BASE_URL }}>
