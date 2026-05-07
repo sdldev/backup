@@ -1,31 +1,22 @@
 ---
 import DashboardShell from '../../../components/DashboardShell.astro';
+import PageHeader from '../../../components/dashboard/PageHeader.astro';
+import StatCard from '../../../components/dashboard/StatCard.astro';
+import StatusBadge from '../../../components/dashboard/StatusBadge.astro';
+import { Button } from '../../../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { apiFetch } from '../../../lib/api';
 
 const { workspaceSlug } = Astro.params;
 const response = await apiFetch(`/v1/workspaces/by-slug/${workspaceSlug}`, Astro.request);
 
-if (response.status === 401) {
-  return Astro.redirect('/login');
-}
-
-if (response.status === 404) {
-  return Astro.redirect('/app');
-}
-
-if (!response.ok) {
-  throw new Error('Failed to load Workspace');
-}
+if (response.status === 401) return Astro.redirect('/login');
+if (response.status === 404) return Astro.redirect('/app');
+if (!response.ok) throw new Error('Failed to load Workspace');
 
 const payload = (await response.json()) as {
   data: {
-    workspace: {
-      id: string;
-      name: string;
-      slug: string;
-      storage_status: string;
-      onboarding_step: string;
-    };
+    workspace: { id: string; name: string; slug: string; storage_status: string; onboarding_step: string };
     membership: { role: string };
     plan: { name: string };
   };
@@ -42,62 +33,41 @@ const navItems = [
 ];
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width" />
-    <title>{workspace.name} Dashboard</title>
-    <link rel="stylesheet" href="/src/styles/dashboard.css" />
-  </head>
-  <body>
-    <DashboardShell brandLabel="Workspace" brandName={workspace.name} sidebarNote={`${membership.role} · ${plan.name}`} navItems={navItems}>
-      <header class="topbar">
-        <div>
-          <p class="eyebrow">Manual Backup dashboard</p>
-          <h1>{workspace.name}</h1>
-          <p>Monitor storage readiness, setup progress, and next actions for encrypted manual Backups.</p>
-        </div>
-        <div class="actions">
-          <a class="button" href="/app">Switch Workspace</a>
-          <a class="button button--primary" href={`/workspace/${workspace.slug}/projects`}>Manage Projects</a>
-        </div>
-      </header>
+<DashboardShell brandLabel="Workspace" brandName={workspace.name} sidebarNote={`${membership.role} · ${plan.name}`} navItems={navItems}>
+  <PageHeader eyebrow="Manual Backup dashboard" title={workspace.name} description="Monitor storage readiness, setup progress, and next actions for encrypted manual Backups.">
+    <Button slot="actions" asChild variant="outline"><a href="/app">Switch Workspace</a></Button>
+    <Button slot="actions" asChild><a href={`/workspace/${workspace.slug}/projects`}>Manage Projects</a></Button>
+  </PageHeader>
 
-      <section class="grid grid--stats" aria-label="Workspace health">
-        <article class="card stat">
-          <span class="stat__label">Storage</span>
-          <span class="stat__value">{workspace.storage_status}</span>
-          <span class={`badge ${storageReady ? 'badge--ok' : 'badge--warn'}`}>{storageReady ? 'Ready' : 'Needs action'}</span>
-        </article>
-        <article class="card stat">
-          <span class="stat__label">Plan</span>
-          <span class="stat__value">{plan.name}</span>
-        </article>
-        <article class="card stat">
-          <span class="stat__label">Role</span>
-          <span class="stat__value">{membership.role}</span>
-        </article>
-      </section>
+  <section class="grid gap-4 md:grid-cols-3" aria-label="Workspace health">
+    <StatCard label="Storage" value={workspace.storage_status}>
+      <StatusBadge status={storageReady ? 'ready' : 'needs_action'} label={storageReady ? 'Ready' : 'Needs action'} />
+    </StatCard>
+    <StatCard label="Plan" value={plan.name} />
+    <StatCard label="Role" value={membership.role} />
+  </section>
 
-      <section class="grid grid--two" style="margin-top: 18px;">
-        <article class="card">
-          <h2>Backup operations</h2>
-          <p>Setup progress, last Backup status, storage usage, and active Database Source count will appear here.</p>
-          <div class="actions">
-            <a class="button button--primary" href={`/workspace/${workspace.slug}/projects`}>Add Database Source</a>
-            <a class="button" href={`/workspace/${workspace.slug}/backups`}>View Backups</a>
-          </div>
-        </article>
-        <article class="card card--soft">
-          <h2>Next actions</h2>
-          <ul class="list">
-            <li class="list-item"><a href={`/workspace/${workspace.slug}/projects`}>Create Project</a></li>
-            <li class="list-item">Add Database Source</li>
-            <li class="list-item">Run first manual Backup</li>
-            <li class="list-item">Review Audit Log</li>
-          </ul>
-        </article>
-      </section>
-    </DashboardShell>
-  </body>
-</html>
+  <section class="mt-6 grid gap-4 lg:grid-cols-[1.3fr_0.7fr]">
+    <Card>
+      <CardHeader><CardTitle>Backup operations</CardTitle></CardHeader>
+      <CardContent className="space-y-4">
+        <p class="text-sm leading-6 text-muted-foreground">Setup progress, last Backup status, storage usage, and active Database Source count will appear here.</p>
+        <div class="flex flex-wrap gap-2">
+          <Button asChild><a href={`/workspace/${workspace.slug}/projects`}>Add Database Source</a></Button>
+          <Button asChild variant="outline"><a href={`/workspace/${workspace.slug}/backups`}>View Backups</a></Button>
+        </div>
+      </CardContent>
+    </Card>
+    <Card className="bg-muted/30">
+      <CardHeader><CardTitle>Next actions</CardTitle></CardHeader>
+      <CardContent>
+        <ul class="grid gap-2 text-sm text-muted-foreground">
+          <li class="rounded-lg border bg-background p-3"><a class="font-medium text-foreground hover:underline" href={`/workspace/${workspace.slug}/projects`}>Create Project</a></li>
+          <li class="rounded-lg border bg-background p-3">Add Database Source</li>
+          <li class="rounded-lg border bg-background p-3">Run first manual Backup</li>
+          <li class="rounded-lg border bg-background p-3">Review Audit Log</li>
+        </ul>
+      </CardContent>
+    </Card>
+  </section>
+</DashboardShell>

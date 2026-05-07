@@ -12,8 +12,8 @@ Last updated: 2026-05-08T04:17:00+07:00
 | 3 | ✅ done | Migrate marketing and auth pages to BaseLayout + shadcn styling | 72f5c1d |
 | 4 | ✅ done | Replace DashboardShell with modern responsive app shell (checkpoint: done) | e564c60 |
 | 5 | ✅ done | Add dashboard composition components for stats, actions, empty states, and forms | ae637b9 |
-| 6 | 🔄 in-progress | Migrate workspace list and workspace creation flows | — |
-| 7 | ⬜ pending | Migrate workspace dashboard and onboarding pages | — |
+| 6 | ✅ done | Migrate workspace list and workspace creation flows | f8d256f |
+| 7 | 🔄 in-progress | Migrate workspace dashboard and onboarding pages | — |
 | 8 | ⬜ pending | Add hybrid data table wrapper and migrate Projects views (checkpoint: done) | — |
 | 9 | ⬜ pending | Migrate Backups and Backup Job views | — |
 | 10 | ⬜ pending | Migrate members and audit log admin views | — |
