@@ -1,37 +1,74 @@
 ---
-type NavItem = { href: string; label: string; active?: boolean };
-const { brandLabel, brandName, navItems, sidebarNote } = Astro.props as {
+import type { DashboardNavGroup, DashboardNavItem } from '../../lib/dashboard-nav';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarRail,
+} from '../ui/sidebar';
+import { Button } from '../ui/button';
+
+const { brandLabel, brandName, navItems = [], navGroups, sidebarNote } = Astro.props as {
   brandLabel: string;
   brandName: string;
-  navItems: NavItem[];
+  navItems?: DashboardNavItem[];
+  navGroups?: DashboardNavGroup[];
   sidebarNote: string;
 };
+
+const groups = navGroups ?? [{ id: 'dashboard', label: 'Dashboard', items: navItems }];
 ---
 
-<aside class="border-r bg-card text-card-foreground md:sticky md:top-0 md:h-screen">
-  <div class="flex h-full flex-col gap-6 p-4">
-    <a class="grid gap-0.5 rounded-lg px-2 py-1" href="/app">
-      <span class="text-[11px] font-bold uppercase tracking-[0.22em] text-primary">{brandLabel}</span>
-      <span class="truncate text-lg font-semibold tracking-tight">{brandName}</span>
-    </a>
-    <nav class="grid gap-1" aria-label="Dashboard">
-      {navItems.map((item) => (
-        <a
-          class="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground data-[active=true]:bg-primary data-[active=true]:text-primary-foreground"
-          data-active={item.active ? 'true' : 'false'}
-          href={item.href}
-        >
-          {item.label}
-        </a>
-      ))}
-    </nav>
-    <p class="mt-auto rounded-lg border bg-muted/40 p-3 text-xs leading-5 text-muted-foreground">{sidebarNote}</p>
-    <button
-      class="rounded-md px-3 py-2 text-left text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-      type="button"
-      data-logout
-    >
+<Sidebar collapsible="icon">
+  <SidebarHeader>
+    <SidebarMenu>
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild size="lg">
+          <a href="/app">
+            <span class="flex size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground" aria-hidden="true">
+              <span class="size-3 rotate-45 rounded-sm border border-current/40 bg-current/15"></span>
+            </span>
+            <span class="grid min-w-0 flex-1 text-left leading-tight">
+              <span class="truncate text-[10px] font-semibold uppercase tracking-[0.18em] text-sidebar-foreground/60">{brandLabel}</span>
+              <span class="truncate text-sm font-semibold">{brandName}</span>
+            </span>
+          </a>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    </SidebarMenu>
+  </SidebarHeader>
+
+  <SidebarContent>
+    {groups.map((group) => (
+      <SidebarGroup>
+        <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            {group.items.map((item) => (
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={item.active}>
+                  <a href={item.href}><span>{item.label}</span></a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+    ))}
+  </SidebarContent>
+
+  <SidebarFooter>
+    <p class="rounded-lg border border-sidebar-border bg-sidebar-accent/40 p-3 text-xs leading-5 text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden">{sidebarNote}</p>
+    <Button className="justify-start" variant="ghost" type="button" data-logout>
       Logout
-    </button>
-  </div>
-</aside>
+    </Button>
+  </SidebarFooter>
+  <SidebarRail />
+</Sidebar>
