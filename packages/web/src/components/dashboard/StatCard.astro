@@ -1,0 +1,11 @@
+---
+const { label, value } = Astro.props as { label: string; value: string | number };
+---
+
+<article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
+  <div class="grid gap-2">
+    <span class="text-sm font-medium text-muted-foreground">{label}</span>
+    <span class="text-3xl font-semibold tracking-tight">{value}</span>
+    <slot />
+  </div>
+</article>
