@@ -107,7 +107,7 @@ const navItems = [
         </div>
       </header>
 
-      {formMessage ? <div class="card notice"><strong>{formMessage}</strong>{inviteLink ? <p><code>{new URL(inviteLink, Astro.url.origin).toString()}</code></p> : null}</div> : null}
+      {formMessage ? <div class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm"><strong>{formMessage}</strong>{inviteLink ? <p><code>{new URL(inviteLink, Astro.url.origin).toString()}</code></p> : null}</div> : null}
 
       <section class="grid gap-4 md:grid-cols-3" aria-label="Members summary">
         <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm"><span class="text-sm font-medium text-muted-foreground">Members</span><span class="block text-3xl font-semibold tracking-tight">{membersPayload.data.length}</span></article>
@@ -151,14 +151,14 @@ const navItems = [
                       <input type="hidden" name="action" value="change-role" />
                       <input type="hidden" name="member_user_id" value={member.user_id} />
                       <select name="role"><option value="member" selected={member.role === 'member'}>Member</option><option value="admin" selected={member.role === 'admin'}>Admin</option></select>
-                      <button class="button button--ghost" type="submit">Update</button>
+                      <button class="inline-flex h-9 items-center justify-center rounded-md border bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50" type="submit">Update</button>
                     </form>
                   ) : null}
                   {canManageMembers && member.role !== 'owner' ? (
                     <form method="post" class="inline-form">
                       <input type="hidden" name="action" value="remove-member" />
                       <input type="hidden" name="member_user_id" value={member.user_id} />
-                      <button class="button button--ghost" type="submit">Remove</button>
+                      <button class="inline-flex h-9 items-center justify-center rounded-md border bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50" type="submit">Remove</button>
                     </form>
                   ) : null}
                 </div>

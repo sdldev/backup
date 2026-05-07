@@ -15,7 +15,7 @@ Last updated: 2026-05-08T04:17:00+07:00
 | 6 | ✅ done | Migrate workspace list and workspace creation flows | f8d256f |
 | 7 | ✅ done | Migrate workspace dashboard and onboarding pages | b30df10 |
 | 8 | ✅ done | Add hybrid data table wrapper and migrate Projects views (checkpoint: done) | 47aafcc |
-| 9 | 🔄 in-progress | Migrate Backups and Backup Job views | — |
-| 10 | ⬜ pending | Migrate members and audit log admin views | — |
+| 9 | ✅ done | Migrate Backups and Backup Job views | 1337d03 |
+| 10 | 🔄 in-progress | Migrate members and audit log admin views | — |
 | 11 | ⬜ pending | Remove legacy dashboard CSS dependency (checkpoint: done) | — |
 | 12 | ⬜ pending | Final visual and accessibility pass (checkpoint: done) | — |
