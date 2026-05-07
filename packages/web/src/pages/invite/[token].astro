@@ -1,4 +1,8 @@
 ---
+import { ThemeToggle } from '../../components/theme/ThemeToggle';
+import { Button } from '../../components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import BaseLayout from '../../layouts/BaseLayout.astro';
 import { apiFetch } from '../../lib/api';
 
 const { token } = Astro.params;
@@ -18,57 +22,66 @@ if (previewResponse.ok) {
 }
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width" />
-    <title>Workspace Invite</title>
-    <link rel="stylesheet" href="/src/styles/dashboard.css" />
-  </head>
-  <body>
-    <main class="auth-shell">
-      <section class="auth-card">
-        <p class="eyebrow">Workspace invite</p>
+<BaseLayout title="Workspace Invite">
+  <main class="grid min-h-screen place-items-center bg-background px-6 py-10 text-foreground">
+    <div class="absolute right-6 top-6">
+      <ThemeToggle client:load />
+    </div>
+
+    <Card className="w-full max-w-xl">
+      <CardHeader className="space-y-3">
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Workspace invite</p>
         {error ? (
           <>
-            <h1>Invite unavailable</h1>
-            <p>{error}</p>
-            <a class="button" href="/app">Go to app</a>
+            <CardTitle className="text-3xl">Invite unavailable</CardTitle>
+            <CardDescription className="text-base leading-7">{error}</CardDescription>
           </>
         ) : preview ? (
           <>
-            <h1>Join {(preview as InvitePreview).workspace.name}</h1>
-            <p>You were invited as <strong>{(preview as InvitePreview).role}</strong> for <strong>{(preview as InvitePreview).email}</strong>.</p>
-            <p class="muted">Expires {(preview as InvitePreview).expires_at}</p>
-            <form data-accept-invite data-token={token}>
-              <button class="button" type="submit">Accept invite</button>
-              <p class="form-status" data-status></p>
-            </form>
-            <p class="muted">You must be signed in with the invited email before accepting.</p>
+            <CardTitle className="text-3xl">Join {(preview as InvitePreview).workspace.name}</CardTitle>
+            <CardDescription className="text-base leading-7">
+              You were invited as <strong>{(preview as InvitePreview).role}</strong> for <strong>{(preview as InvitePreview).email}</strong>.
+            </CardDescription>
           </>
         ) : null}
-      </section>
-    </main>
-    <script>
-      const form = document.querySelector('[data-accept-invite]');
-      form?.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        const token = form.getAttribute('data-token');
-        const status = form.querySelector('[data-status]');
-        if (status) status.textContent = 'Accepting invite...';
-        const response = await fetch(`/v1/invites/${token}/accept`, { method: 'POST', credentials: 'include' });
-        if (response.status === 401) {
-          window.location.href = `/login?return_to=${encodeURIComponent(window.location.pathname)}`;
-          return;
-        }
-        if (!response.ok) {
-          const payload = await response.json().catch(() => null);
-          if (status) status.textContent = payload?.error?.message ?? 'Invite could not be accepted.';
-          return;
-        }
-        const payload = await response.json();
-        window.location.href = `/workspace/${payload.data.workspace_slug}`;
-      });
-    </script>
-  </body>
-</html>
+      </CardHeader>
+      <CardContent className="grid gap-4">
+        {error ? (
+          <Button asChild variant="outline">
+            <a href="/app">Go to app</a>
+          </Button>
+        ) : preview ? (
+          <>
+            <p class="text-sm text-muted-foreground">Expires {(preview as InvitePreview).expires_at}</p>
+            <form class="grid gap-3" data-accept-invite data-token={token}>
+              <Button type="submit">Accept invite</Button>
+              <p class="text-sm text-muted-foreground" data-status></p>
+            </form>
+            <p class="text-sm text-muted-foreground">You must be signed in with the invited email before accepting.</p>
+          </>
+        ) : null}
+      </CardContent>
+    </Card>
+  </main>
+  <script>
+    const form = document.querySelector('[data-accept-invite]');
+    form?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const token = form.getAttribute('data-token');
+      const status = form.querySelector('[data-status]');
+      if (status) status.textContent = 'Accepting invite...';
+      const response = await fetch(`/v1/invites/${token}/accept`, { method: 'POST', credentials: 'include' });
+      if (response.status === 401) {
+        window.location.href = `/login?return_to=${encodeURIComponent(window.location.pathname)}`;
+        return;
+      }
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        if (status) status.textContent = payload?.error?.message ?? 'Invite could not be accepted.';
+        return;
+      }
+      const payload = await response.json();
+      window.location.href = `/workspace/${payload.data.workspace_slug}`;
+    });
+  </script>
+</BaseLayout>

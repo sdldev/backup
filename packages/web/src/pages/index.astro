@@ -1,48 +1,68 @@
 ---
+import { ThemeToggle } from '../components/theme/ThemeToggle';
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
 export const prerender = true;
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width" />
-    <title>Manual Backup SaaS Beta</title>
-    <link rel="stylesheet" href="/src/styles/dashboard.css" />
-  </head>
-  <body>
-    <main class="marketing-shell">
-      <nav class="marketing-nav">
-        <a class="brand brand--light" href="/">
-          <span class="brand__label">Manual Backup</span>
-          <span class="brand__name">Portal</span>
-        </a>
-        <a class="button button--primary" href="/login">Sign in</a>
-      </nav>
+<BaseLayout title="Manual Backup SaaS Beta">
+  <main class="min-h-screen bg-background px-6 py-6 text-foreground md:px-10">
+    <nav class="mx-auto flex w-full max-w-6xl items-center justify-between gap-4" aria-label="Main">
+      <a class="grid gap-0.5" href="/">
+        <span class="text-xs font-bold uppercase tracking-[0.24em] text-primary">Manual Backup</span>
+        <span class="text-lg font-semibold tracking-tight">Portal</span>
+      </a>
+      <div class="flex items-center gap-2">
+        <ThemeToggle client:load />
+        <Button asChild>
+          <a href="/login">Sign in</a>
+        </Button>
+      </div>
+    </nav>
 
-      <section class="hero-card">
-        <p class="eyebrow">Manual Backup SaaS Beta</p>
-        <h1>Encrypted manual Backups for agency Workspaces</h1>
-        <p>Sign in with Google or GitHub, create Workspaces, configure Projects and Database Sources, run manual Backup Jobs, download retained Backup artifacts, and review Audit Logs.</p>
-        <div class="actions">
-          <a class="button button--primary" href="/login">Sign in</a>
-          <a class="button" href="/app">Open app</a>
+    <section class="mx-auto grid w-full max-w-6xl gap-8 py-16 md:grid-cols-[1.15fr_0.85fr] md:py-24">
+      <div class="flex flex-col justify-center gap-6">
+        <div class="inline-flex w-fit rounded-full border bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">Manual Backup SaaS Beta</div>
+        <div class="space-y-4">
+          <h1 class="max-w-3xl text-4xl font-semibold tracking-tight md:text-6xl">Encrypted manual Backups for agency Workspaces</h1>
+          <p class="max-w-2xl text-base leading-7 text-muted-foreground md:text-lg">
+            Sign in with Google or GitHub, create Workspaces, configure Projects and Database Sources, run manual Backup Jobs, download retained Backup artifacts, and review Audit Logs.
+          </p>
         </div>
-      </section>
+        <div class="flex flex-wrap gap-3">
+          <Button asChild size="lg">
+            <a href="/login">Sign in</a>
+          </Button>
+          <Button asChild variant="outline" size="lg">
+            <a href="/app">Open app</a>
+          </Button>
+        </div>
+      </div>
 
-      <section class="grid grid--stats marketing-grid" aria-label="Phase 1 scope">
-        <article class="card stat">
-          <span class="stat__label">Backup mode</span>
-          <span class="stat__value">Manual</span>
-        </article>
-        <article class="card stat">
-          <span class="stat__label">Storage</span>
-          <span class="stat__value">Encrypted</span>
-        </article>
-        <article class="card stat">
-          <span class="stat__label">Audit</span>
-          <span class="stat__value">Included</span>
-        </article>
-      </section>
-    </main>
-  </body>
-</html>
+      <Card className="self-start md:self-center">
+        <CardHeader>
+          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Phase 1 scope</p>
+          <CardTitle>Backup operations dashboard</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <dl class="grid gap-4">
+            <div class="flex items-center justify-between rounded-lg border p-4">
+              <dt class="text-sm text-muted-foreground">Backup mode</dt>
+              <dd class="text-xl font-semibold">Manual</dd>
+            </div>
+            <div class="flex items-center justify-between rounded-lg border p-4">
+              <dt class="text-sm text-muted-foreground">Storage</dt>
+              <dd class="text-xl font-semibold">Encrypted</dd>
+            </div>
+            <div class="flex items-center justify-between rounded-lg border p-4">
+              <dt class="text-sm text-muted-foreground">Audit</dt>
+              <dd class="text-xl font-semibold">Included</dd>
+            </div>
+          </dl>
+        </CardContent>
+      </Card>
+    </section>
+  </main>
+</BaseLayout>
