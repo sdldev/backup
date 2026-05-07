@@ -1,0 +1,125 @@
+---
+import DashboardShell from '../../../components/DashboardShell.astro';
+import { apiFetch, API_BASE_URL } from '../../../lib/api';
+
+const { workspaceSlug } = Astro.params;
+const response = await apiFetch(`/v1/workspaces/by-slug/${workspaceSlug}`, Astro.request);
+
+if (response.status === 401) return Astro.redirect('/login');
+if (response.status === 404) return Astro.redirect('/app');
+if (!response.ok) throw new Error('Failed to load Workspace');
+
+const payload = (await response.json()) as {
+  data: {
+    workspace: { id: string; name: string; slug: string; storage_status: string; onboarding_step: string };
+    membership: { role: string };
+    plan: { name: string };
+  };
+};
+
+const { workspace, membership, plan } = payload.data;
+const storageReady = workspace.storage_status === 'ready';
+const checklist = [
+  { label: 'Workspace created', done: true },
+  { label: 'Backup Storage provisioned', done: storageReady },
+  { label: 'Project created', done: false, href: `/workspace/${workspace.slug}/projects` },
+  { label: 'Database Source added', done: false },
+  { label: 'Connection tested', done: false },
+  { label: 'First Backup succeeded', done: false },
+  { label: 'Team invite optional', done: false },
+];
+const completedCount = checklist.filter((item) => item.done).length;
+const navItems = [
+  { href: `/workspace/${workspace.slug}`, label: 'Dashboard' },
+  { href: `/workspace/${workspace.slug}/onboarding`, label: 'Onboarding', active: true },
+  { href: `/workspace/${workspace.slug}/projects`, label: 'Projects' },
+  { href: `/workspace/${workspace.slug}/backups`, label: 'Backups' },
+  { href: `/workspace/${workspace.slug}/settings/audit-log`, label: 'Audit Log' },
+];
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>{workspace.name} Onboarding</title>
+    <link rel="stylesheet" href="/src/styles/dashboard.css" />
+  </head>
+  <body>
+    <DashboardShell brandLabel="Workspace" brandName={workspace.name} sidebarNote={`${membership.role} · ${plan.name}`} navItems={navItems}>
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Onboarding checklist</p>
+          <h1>{workspace.name}</h1>
+          <p>Prepare Workspace for encrypted manual Backups. Scheduled Backups are Phase 2.</p>
+        </div>
+        <div class="actions">
+          <a class="button" href={`/workspace/${workspace.slug}/projects`}>Projects</a>
+          <button class="button button--primary" type="button" id="retry-storage">Provision / retry Storage</button>
+        </div>
+      </header>
+
+      <section class="grid grid--stats" aria-label="Onboarding summary">
+        <article class="card stat">
+          <span class="stat__label">Progress</span>
+          <span class="stat__value">{completedCount} / {checklist.length}</span>
+        </article>
+        <article class="card stat">
+          <span class="stat__label">Current Step</span>
+          <span class="stat__value">{workspace.onboarding_step}</span>
+        </article>
+        <article class="card stat">
+          <span class="stat__label">Backup Storage</span>
+          <span class="stat__value">{workspace.storage_status}</span>
+          <span class={`badge ${storageReady ? 'badge--ok' : 'badge--warn'}`}>{storageReady ? 'Ready' : 'Needs action'}</span>
+        </article>
+      </section>
+
+      <section class="grid grid--two" style="margin-top: 18px;">
+        <article class="card">
+          <h2>Setup checklist</h2>
+          <ol class="list">
+            {checklist.map((item) => (
+              <li class="list-item">
+                <div>
+                  <strong>{item.href ? <a href={item.href}>{item.label}</a> : item.label}</strong>
+                  <p>{item.done ? 'Completed' : 'Pending'}</p>
+                </div>
+                <span class={`badge ${item.done ? 'badge--ok' : 'badge--warn'}`}>{item.done ? 'Done' : 'Pending'}</span>
+              </li>
+            ))}
+          </ol>
+        </article>
+
+        <article class="card card--soft">
+          <h2>Storage provisioning</h2>
+          <p>Backup Jobs are blocked until current Backup Storage config is active.</p>
+          <p id="storage-message" role="status"></p>
+          <div class="actions">
+            <button class="button button--primary" type="button" id="retry-storage-secondary">Provision / retry Backup Storage</button>
+          </div>
+        </article>
+      </section>
+    </DashboardShell>
+
+    <script is:inline define:vars={{ apiBaseUrl: API_BASE_URL, workspaceId: payload.data.workspace.id }}>
+      const buttons = [document.getElementById('retry-storage'), document.getElementById('retry-storage-secondary')].filter(Boolean);
+      const message = document.getElementById('storage-message');
+
+      buttons.forEach((button) => {
+        button.addEventListener('click', async () => {
+          message.textContent = 'Provisioning Backup Storage...';
+          const response = await fetch(`${apiBaseUrl}/v1/workspaces/${workspaceId}/storage/provision/retry`, {
+            method: 'POST',
+            credentials: 'include',
+          });
+          const payload = await response.json();
+          message.textContent = response.ok
+            ? `Backup Storage ${payload.data.workspace.storage_status}`
+            : payload.error?.message ?? 'Backup Storage provisioning failed';
+          if (response.ok) window.location.reload();
+        });
+      });
+    </script>
+  </body>
+</html>

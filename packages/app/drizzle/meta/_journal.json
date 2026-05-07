@@ -1,0 +1,62 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1778153288194,
+      "tag": "0000_small_eternals",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1778153458860,
+      "tag": "0001_special_doctor_faustus",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1778154075049,
+      "tag": "0002_safe_retro_girl",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1778154182323,
+      "tag": "0003_puzzling_the_enforcers",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1778154743689,
+      "tag": "0004_pretty_thor",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1778155109715,
+      "tag": "0005_shocking_dragon_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1778155551391,
+      "tag": "0006_cloudy_morlun",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1778156100211,
+      "tag": "0007_slim_starfox",
+      "breakpoints": true
+    }
+  ]
+}

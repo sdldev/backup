@@ -1,0 +1,104 @@
+---
+import DashboardShell from '../../../../components/DashboardShell.astro';
+import { apiFetch } from '../../../../lib/api';
+
+const { workspaceSlug } = Astro.params;
+const workspaceResponse = await apiFetch(`/v1/workspaces/by-slug/${workspaceSlug}`, Astro.request);
+
+if (workspaceResponse.status === 401) return Astro.redirect('/login');
+if (workspaceResponse.status === 404) return Astro.redirect('/app');
+if (!workspaceResponse.ok) throw new Error('Failed to load Workspace');
+
+const workspacePayload = (await workspaceResponse.json()) as {
+  data: { workspace: { id: string; name: string; slug: string }; membership: { role: string } };
+};
+const { workspace, membership } = workspacePayload.data;
+
+const auditResponse = await apiFetch(`/v1/workspaces/${workspace.id}/audit-log`, Astro.request);
+if (!auditResponse.ok) throw new Error('Failed to load Audit Log');
+
+const auditPayload = (await auditResponse.json()) as {
+  data: Array<{
+    id: string;
+    event_type: string;
+    actor: { type: string; user_id: string | null };
+    resource_type: string;
+    resource_id: string | null;
+    metadata: Record<string, unknown>;
+    created_at: string;
+  }>;
+};
+
+const userEventCount = auditPayload.data.filter((event) => event.actor.type === 'user').length;
+const resourceTypeCount = new Set(auditPayload.data.map((event) => event.resource_type)).size;
+const navItems = [
+  { href: `/workspace/${workspace.slug}`, label: 'Dashboard' },
+  { href: `/workspace/${workspace.slug}/onboarding`, label: 'Onboarding' },
+  { href: `/workspace/${workspace.slug}/projects`, label: 'Projects' },
+  { href: `/workspace/${workspace.slug}/backups`, label: 'Backups' },
+  { href: `/workspace/${workspace.slug}/settings/audit-log`, label: 'Audit Log', active: true },
+];
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>{workspace.name} Audit Log</title>
+    <link rel="stylesheet" href="/src/styles/dashboard.css" />
+  </head>
+  <body>
+    <DashboardShell brandLabel="Workspace" brandName={workspace.name} sidebarNote={`${membership.role} · Security events`} navItems={navItems}>
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Workspace settings</p>
+            <h1>Audit Log</h1>
+            <p>Review security and data-access events. Sensitive metadata is redacted before storage.</p>
+          </div>
+          <div class="actions">
+            <a class="button" href={`/workspace/${workspace.slug}`}>Dashboard</a>
+          </div>
+        </header>
+
+        <section class="grid grid--stats" aria-label="Audit summary">
+          <article class="card stat">
+            <span class="stat__label">Events</span>
+            <span class="stat__value">{auditPayload.data.length}</span>
+          </article>
+          <article class="card stat">
+            <span class="stat__label">User Actor Events</span>
+            <span class="stat__value">{userEventCount}</span>
+          </article>
+          <article class="card stat">
+            <span class="stat__label">Resource Types</span>
+            <span class="stat__value">{resourceTypeCount}</span>
+          </article>
+        </section>
+
+        <section class="card" style="margin-top: 18px;">
+          <h2>Latest events</h2>
+          {
+            auditPayload.data.length === 0 ? (
+              <div class="empty">
+                <h2>No Audit Log events yet</h2>
+                <p>Security events will appear here after Workspace actions occur.</p>
+              </div>
+            ) : (
+              <ol class="list">
+                {auditPayload.data.map((event) => (
+                  <li class="list-item">
+                    <div>
+                      <strong>{event.event_type}</strong>
+                      <p>{event.created_at} · {event.actor.type} · {event.resource_type}</p>
+                      <pre class="metadata-block">{JSON.stringify(event.metadata, null, 2)}</pre>
+                    </div>
+                    <span class="badge">{event.resource_type}</span>
+                  </li>
+                ))}
+              </ol>
+            )
+          }
+        </section>
+    </DashboardShell>
+  </body>
+</html>

@@ -1,0 +1,28 @@
+---
+const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Sign in</title>
+    <link rel="stylesheet" href="/src/styles/dashboard.css" />
+  </head>
+  <body>
+    <main class="auth-shell">
+      <section class="auth-card">
+        <p class="eyebrow">Manual Backup SaaS Beta</p>
+        <h1>Sign in</h1>
+        <p>Use verified Google or GitHub email to access Workspaces, Projects, Database Sources, Backups, and Audit Logs.</p>
+
+        <div class="auth-actions">
+          <a class="button button--primary" href={`${apiBaseUrl}/v1/auth/google/start`}>Continue with Google</a>
+          <a class="button" href={`${apiBaseUrl}/v1/auth/github/start`}>Continue with GitHub</a>
+        </div>
+
+        <p class="auth-note">Email/password sign-in is not supported in Phase 1.</p>
+      </section>
+    </main>
+  </body>
+</html>

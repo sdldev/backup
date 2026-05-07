@@ -1,0 +1,46 @@
+---
+import { API_BASE_URL } from '../lib/api';
+
+type NavItem = {
+  href: string;
+  label: string;
+  active?: boolean;
+};
+
+const {
+  brandLabel,
+  brandName,
+  navItems,
+  sidebarNote,
+} = Astro.props as {
+  brandLabel: string;
+  brandName: string;
+  navItems: NavItem[];
+  sidebarNote: string;
+};
+---
+
+<div class="dashboard-shell">
+  <aside class="sidebar">
+    <a class="brand" href="/app">
+      <span class="brand__label">{brandLabel}</span>
+      <span class="brand__name">{brandName}</span>
+    </a>
+    <nav class="nav-list" aria-label="Dashboard">
+      {navItems.map((item) => <a class={`nav-link ${item.active ? 'is-active' : ''}`} href={item.href}>{item.label}</a>)}
+    </nav>
+    <p class="sidebar-note">{sidebarNote}</p>
+    <button class="nav-link logout-button" type="button" data-logout>Logout</button>
+  </aside>
+
+  <main class="dashboard-main">
+    <slot />
+  </main>
+</div>
+
+<script is:inline define:vars={{ apiBaseUrl: API_BASE_URL }}>
+  document.querySelector('[data-logout]')?.addEventListener('click', async () => {
+    await fetch(`${apiBaseUrl}/v1/auth/logout`, { method: 'POST', credentials: 'include' });
+    window.location.href = '/login';
+  });
+</script>

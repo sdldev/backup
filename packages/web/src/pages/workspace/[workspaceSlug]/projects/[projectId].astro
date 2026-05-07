@@ -1,0 +1,275 @@
+---
+import DashboardShell from '../../../../components/DashboardShell.astro';
+import { apiFetch, API_BASE_URL } from '../../../../lib/api';
+
+const { workspaceSlug, projectId } = Astro.params;
+const workspaceResponse = await apiFetch(`/v1/workspaces/by-slug/${workspaceSlug}`, Astro.request);
+
+if (workspaceResponse.status === 401) return Astro.redirect('/login');
+if (workspaceResponse.status === 404) return Astro.redirect('/app');
+if (!workspaceResponse.ok) throw new Error('Failed to load Workspace');
+
+const workspacePayload = (await workspaceResponse.json()) as {
+  data: { workspace: { id: string; name: string; slug: string }; membership: { role: string } };
+};
+const { workspace, membership } = workspacePayload.data;
+
+const projectsResponse = await apiFetch(`/v1/workspaces/${workspace.id}/projects`, Astro.request);
+if (!projectsResponse.ok) throw new Error('Failed to load Projects');
+const projectsPayload = (await projectsResponse.json()) as {
+  data: Array<{ id: string; name: string; website_url: string | null }>;
+};
+const project = projectsPayload.data.find((item) => item.id === projectId);
+if (!project) return Astro.redirect(`/workspace/${workspace.slug}/projects`);
+
+const sourcesResponse = await apiFetch(`/v1/workspaces/${workspace.id}/projects/${project.id}/database-sources`, Astro.request);
+if (!sourcesResponse.ok) throw new Error('Failed to load Database Sources');
+const sourcesPayload = (await sourcesResponse.json()) as {
+  data: Array<{
+    id: string;
+    engine: 'mysql' | 'postgresql';
+    display_name: string;
+    technical_database_name: string;
+    host: string;
+    port: number;
+    username: string;
+    has_saved_credential: boolean;
+    credential_mask: string | null;
+    ssl_mode: string;
+    state: string;
+    health: string;
+    retention_days: number;
+  }>;
+};
+
+const enabledSourceCount = sourcesPayload.data.filter((source) => source.state === 'enabled').length;
+const healthySourceCount = sourcesPayload.data.filter((source) => source.health === 'healthy').length;
+const navItems = [
+  { href: `/workspace/${workspace.slug}`, label: 'Dashboard' },
+  { href: `/workspace/${workspace.slug}/onboarding`, label: 'Onboarding' },
+  { href: `/workspace/${workspace.slug}/projects`, label: 'Projects', active: true },
+  { href: `/workspace/${workspace.slug}/backups`, label: 'Backups' },
+  { href: `/workspace/${workspace.slug}/settings/audit-log`, label: 'Audit Log' },
+];
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>{project.name} Database Sources</title>
+    <link rel="stylesheet" href="/src/styles/dashboard.css" />
+  </head>
+  <body>
+    <DashboardShell brandLabel="Project" brandName={project.name} sidebarNote={`${membership.role} · Database Sources`} navItems={navItems}>
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Database Sources</p>
+            <h1>{project.name}</h1>
+            <p>{project.website_url ? project.website_url : 'Configure Source connections before running manual Backups.'}</p>
+          </div>
+          <div class="actions">
+            <a class="button" href={`/workspace/${workspace.slug}/projects`}>All Projects</a>
+            <a class="button" href={`/workspace/${workspace.slug}`}>Dashboard</a>
+          </div>
+        </header>
+
+        <section class="grid grid--stats" aria-label="Database Source summary">
+          <article class="card stat">
+            <span class="stat__label">Sources</span>
+            <span class="stat__value">{sourcesPayload.data.length}</span>
+          </article>
+          <article class="card stat">
+            <span class="stat__label">Enabled</span>
+            <span class="stat__value">{enabledSourceCount}</span>
+          </article>
+          <article class="card stat">
+            <span class="stat__label">Healthy</span>
+            <span class="stat__value">{healthySourceCount}</span>
+          </article>
+        </section>
+
+        <section class="grid grid--two" style="margin-top: 18px;">
+          <article class="card">
+            <h2>Add disabled draft Source</h2>
+            <p>Save encrypted credentials, test connection, then enable Source before running Backups.</p>
+            <form id="source-form" class="form-grid">
+              <label>
+                Engine
+                <select name="engine">
+                  <option value="mysql">MySQL/MariaDB</option>
+                  <option value="postgresql">PostgreSQL</option>
+                </select>
+              </label>
+              <label>
+                Display name
+                <input name="display_name" required maxlength="120" placeholder="Production database" />
+              </label>
+              <label>
+                Technical database name
+                <input name="technical_database_name" required maxlength="120" />
+              </label>
+              <label>
+                Host
+                <input name="host" required maxlength="255" placeholder="db.example.com" />
+              </label>
+              <label>
+                Port
+                <input name="port" required type="number" min="1" max="65535" value="3306" />
+              </label>
+              <label>
+                Username
+                <input name="username" required maxlength="120" />
+              </label>
+              <label>
+                Password
+                <input name="password" type="password" autocomplete="new-password" />
+              </label>
+              <label>
+                SSL mode
+                <select name="ssl_mode">
+                  <option value="require">Require TLS</option>
+                  <option value="prefer">Prefer TLS</option>
+                  <option value="disable">Disable TLS</option>
+                </select>
+              </label>
+              <label>
+                Retention days
+                <input name="retention_days" required type="number" min="7" max="30" value="7" />
+              </label>
+              <button class="button button--primary" type="submit">Save disabled draft</button>
+            </form>
+            <p id="form-message" role="status"></p>
+          </article>
+
+          <article class="card">
+            <h2>Database Source list</h2>
+            {
+              sourcesPayload.data.length === 0 ? (
+                <div class="empty">
+                  <h2>No Database Source yet</h2>
+                  <p>Add Source, test connection, enable it, then run first manual Backup.</p>
+                </div>
+              ) : (
+                <ul class="list">
+                  {sourcesPayload.data.map((source) => (
+                    <li class="list-item">
+                      <div>
+                        <strong>{source.display_name}</strong>
+                        <p>
+                          {source.engine} · {source.host}:{source.port} · retention {source.retention_days} days
+                        </p>
+                        <div class="actions">
+                          <span class={`badge ${source.state === 'enabled' ? 'badge--ok' : 'badge--warn'}`}>{source.state}</span>
+                          <span class={`badge ${source.health === 'healthy' ? 'badge--ok' : 'badge--warn'}`}>{source.health}</span>
+                          <span class="badge">credential {source.has_saved_credential ? 'saved' : 'missing'}</span>
+                        </div>
+                      </div>
+                      <div class="actions">
+                        <button class="button" type="button" data-test-source={source.id}>Test</button>
+                        <button class="button" type="button" data-enable-source={source.id}>Enable</button>
+                        <button class="button" type="button" data-disable-source={source.id}>Disable</button>
+                        <button class="button button--primary" type="button" data-run-backup={source.id}>Run Backup</button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )
+            }
+          </article>
+        </section>
+    </DashboardShell>
+
+    <script is:inline define:vars={{ apiBaseUrl: API_BASE_URL, workspaceId: workspace.id, projectId: project.id, workspaceSlug: workspace.slug }}>
+      const form = document.getElementById('source-form');
+      const message = document.getElementById('form-message');
+
+      document.querySelectorAll('[data-test-source]').forEach((button) => {
+        button.addEventListener('click', async () => {
+          message.textContent = 'Testing Database Source...';
+          const sourceId = button.getAttribute('data-test-source');
+          const response = await fetch(
+            `${apiBaseUrl}/v1/workspaces/${workspaceId}/projects/${projectId}/database-sources/${sourceId}/test-connection`,
+            { method: 'POST', credentials: 'include' },
+          );
+          const payload = await response.json();
+          message.textContent = response.ok
+            ? payload.data.test.user_error_message
+            : payload.error?.message ?? 'Connection test failed';
+        });
+      });
+
+      async function postSourceAction(sourceId, action) {
+        message.textContent = `${action} Database Source...`;
+        const response = await fetch(
+          `${apiBaseUrl}/v1/workspaces/${workspaceId}/projects/${projectId}/database-sources/${sourceId}/${action}`,
+          { method: 'POST', credentials: 'include' },
+        );
+        const payload = await response.json();
+        if (!response.ok) {
+          message.textContent = payload.error?.message ?? `Database Source ${action} failed`;
+          return;
+        }
+        window.location.reload();
+      }
+
+      document.querySelectorAll('[data-enable-source]').forEach((button) => {
+        button.addEventListener('click', () => postSourceAction(button.getAttribute('data-enable-source'), 'enable'));
+      });
+
+      document.querySelectorAll('[data-disable-source]').forEach((button) => {
+        button.addEventListener('click', () => postSourceAction(button.getAttribute('data-disable-source'), 'disable'));
+      });
+
+      document.querySelectorAll('[data-run-backup]').forEach((button) => {
+        button.addEventListener('click', async () => {
+          message.textContent = 'Queueing Backup Job...';
+          const sourceId = button.getAttribute('data-run-backup');
+          const response = await fetch(`${apiBaseUrl}/v1/workspaces/${workspaceId}/database-sources/${sourceId}/backup-jobs`, {
+            method: 'POST',
+            credentials: 'include',
+          });
+          const payload = await response.json();
+          if (!response.ok) {
+            message.textContent = payload.error?.message ?? 'Backup Job could not be queued';
+            return;
+          }
+          window.location.href = `/workspace/${workspaceSlug}/backup-jobs/${payload.data.id}`;
+        });
+      });
+
+      form?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        message.textContent = 'Saving Database Source...';
+
+        const formData = new FormData(form);
+        const body = {
+          engine: String(formData.get('engine') ?? 'mysql'),
+          display_name: String(formData.get('display_name') ?? ''),
+          technical_database_name: String(formData.get('technical_database_name') ?? ''),
+          host: String(formData.get('host') ?? ''),
+          port: Number(formData.get('port') ?? 3306),
+          username: String(formData.get('username') ?? ''),
+          password: String(formData.get('password') ?? '') || undefined,
+          ssl_mode: String(formData.get('ssl_mode') ?? 'require'),
+          retention_days: Number(formData.get('retention_days') ?? 7),
+        };
+
+        const response = await fetch(`${apiBaseUrl}/v1/workspaces/${workspaceId}/projects/${projectId}/database-sources`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+
+        const payload = await response.json();
+        if (!response.ok) {
+          message.textContent = payload.error?.message ?? 'Database Source could not be saved';
+          return;
+        }
+
+        window.location.reload();
+      });
+    </script>
+  </body>
+</html>

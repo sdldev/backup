@@ -1,0 +1,145 @@
+---
+import DashboardShell from '../../../../components/DashboardShell.astro';
+import { apiFetch, API_BASE_URL } from '../../../../lib/api';
+
+const { workspaceSlug, jobId } = Astro.params;
+const workspaceResponse = await apiFetch(`/v1/workspaces/by-slug/${workspaceSlug}`, Astro.request);
+
+if (workspaceResponse.status === 401) return Astro.redirect('/login');
+if (workspaceResponse.status === 404) return Astro.redirect('/app');
+if (!workspaceResponse.ok) throw new Error('Failed to load Workspace');
+
+const workspacePayload = (await workspaceResponse.json()) as {
+  data: { workspace: { id: string; name: string; slug: string }; membership: { role: string } };
+};
+const { workspace, membership } = workspacePayload.data;
+
+const jobResponse = await apiFetch(`/v1/workspaces/${workspace.id}/backup-jobs/${jobId}`, Astro.request);
+if (jobResponse.status === 404) return Astro.redirect(`/workspace/${workspace.slug}`);
+if (!jobResponse.ok) throw new Error('Failed to load Backup Job');
+
+const jobPayload = (await jobResponse.json()) as {
+  data: {
+    id: string;
+    database_source_id: string;
+    trigger: string;
+    status: string;
+    stage: string;
+    attempt_count: number;
+    max_attempts: number;
+    user_error_message: string | null;
+    internal_error_ref: string | null;
+    queued_at: string;
+    started_at: string | null;
+    finished_at: string | null;
+  };
+};
+const job = jobPayload.data;
+const canCancel = job.status === 'queued' || job.status === 'running';
+const navItems = [
+  { href: `/workspace/${workspace.slug}`, label: 'Dashboard' },
+  { href: `/workspace/${workspace.slug}/onboarding`, label: 'Onboarding' },
+  { href: `/workspace/${workspace.slug}/projects`, label: 'Projects' },
+  { href: `/workspace/${workspace.slug}/backups`, label: 'Backups' },
+  { href: `/workspace/${workspace.slug}/settings/audit-log`, label: 'Audit Log' },
+];
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Backup Job</title>
+    <link rel="stylesheet" href="/src/styles/dashboard.css" />
+  </head>
+  <body>
+    <DashboardShell brandLabel="Workspace" brandName={workspace.name} sidebarNote={`${membership.role} · Backup Job`} navItems={navItems}>
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Backup Job</p>
+            <h1>{job.id}</h1>
+            <p>Track live lifecycle state for manual Backup execution.</p>
+          </div>
+          <div class="actions">
+            <a class="button" href={`/workspace/${workspace.slug}/projects`}>Projects</a>
+            <a class="button" href={`/workspace/${workspace.slug}/backups`}>Backups</a>
+            <button class="button button--primary" type="button" id="cancel-job" disabled={!canCancel}>Cancel Job</button>
+          </div>
+        </header>
+
+        <section class="grid grid--stats" aria-label="Backup Job summary">
+          <article class="card stat">
+            <span class="stat__label">Status</span>
+            <span class="stat__value">{job.status}</span>
+            <span class={`badge ${job.status === 'succeeded' ? 'badge--ok' : job.status === 'failed' ? 'badge--warn' : ''}`}>{job.stage}</span>
+          </article>
+          <article class="card stat">
+            <span class="stat__label">Trigger</span>
+            <span class="stat__value">{job.trigger}</span>
+          </article>
+          <article class="card stat">
+            <span class="stat__label">Attempts</span>
+            <span class="stat__value">{job.attempt_count} / {job.max_attempts}</span>
+          </article>
+        </section>
+
+        <section class="grid grid--two" style="margin-top: 18px;">
+          <article class="card">
+            <h2>Execution detail</h2>
+            <dl class="detail-list">
+              <dt>Queued at</dt>
+              <dd>{job.queued_at}</dd>
+              <dt>Started at</dt>
+              <dd>{job.started_at ?? 'Not started'}</dd>
+              <dt>Finished at</dt>
+              <dd>{job.finished_at ?? 'Not finished'}</dd>
+              <dt>Database Source</dt>
+              <dd>{job.database_source_id}</dd>
+            </dl>
+            {job.user_error_message ? <p>{job.user_error_message}</p> : null}
+            {job.internal_error_ref ? <p>Support reference: {job.internal_error_ref}</p> : null}
+            <p id="job-message" role="status"></p>
+          </article>
+
+          <article class="card card--soft">
+            <h2>Live events scaffold</h2>
+            <p id="event-state">Waiting for current state...</p>
+            <p>Stream emits sanitized Job state only. Raw dump output and secrets are never exposed.</p>
+          </article>
+        </section>
+    </DashboardShell>
+
+    <script is:inline define:vars={{ apiBaseUrl: API_BASE_URL, workspaceId: workspace.id, jobId: job.id }}>
+      const button = document.getElementById('cancel-job');
+      const message = document.getElementById('job-message');
+
+      const eventState = document.getElementById('event-state');
+      const events = new EventSource(`${apiBaseUrl}/v1/workspaces/${workspaceId}/backup-jobs/${jobId}/events`, {
+        withCredentials: true,
+      });
+      events.addEventListener('state', (event) => {
+        const data = JSON.parse(event.data);
+        eventState.textContent = `${data.status} · ${data.stage}`;
+      });
+      events.onerror = () => {
+        eventState.textContent = 'Live events unavailable. Refresh page for latest status.';
+        events.close();
+      };
+
+      button?.addEventListener('click', async () => {
+        message.textContent = 'Cancelling Backup Job...';
+        const response = await fetch(`${apiBaseUrl}/v1/workspaces/${workspaceId}/backup-jobs/${jobId}/cancel`, {
+          method: 'POST',
+          credentials: 'include',
+        });
+        const payload = await response.json();
+        if (!response.ok) {
+          message.textContent = payload.error?.message ?? 'Backup Job could not be cancelled';
+          return;
+        }
+        window.location.reload();
+      });
+
+    </script>
+  </body>
+</html>

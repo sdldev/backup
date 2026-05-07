@@ -1,0 +1,105 @@
+---
+import DashboardShell from '../components/DashboardShell.astro';
+import { apiFetch } from '../lib/api';
+
+const response = await apiFetch('/v1/workspaces', Astro.request);
+
+if (response.status === 401) {
+  return Astro.redirect('/login');
+}
+
+if (!response.ok) {
+  throw new Error('Failed to load Workspaces');
+}
+
+const payload = (await response.json()) as {
+  data: Array<{
+    workspace: {
+      id: string;
+      name: string;
+      slug: string;
+      storage_status: string;
+      onboarding_step: string;
+    };
+    membership: { role: string };
+    plan: { slug: string; name: string };
+  }>;
+};
+
+const readyStorageCount = payload.data.filter((item) => item.workspace.storage_status === 'ready').length;
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Workspaces</title>
+    <link rel="stylesheet" href="/src/styles/dashboard.css" />
+  </head>
+  <body>
+    <DashboardShell
+      brandLabel="Manual Backup"
+      brandName="Portal"
+      sidebarNote="Encrypted manual Backups for Projects and Database Sources."
+      navItems={[{ href: '/app', label: 'Workspaces', active: true }, { href: '/app/new-workspace', label: 'New Workspace' }]}
+    >
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Workspace launcher</p>
+          <h1>Your Workspaces</h1>
+          <p>Choose tenant to manage Projects, Database Sources, Backups, and Audit Log.</p>
+        </div>
+        <div class="actions">
+          <a class="button button--primary" href="/app/new-workspace">Create Workspace</a>
+        </div>
+      </header>
+
+      <section class="grid grid--stats" aria-label="Workspace summary">
+        <article class="card stat">
+          <span class="stat__label">Total Workspaces</span>
+          <span class="stat__value">{payload.data.length}</span>
+        </article>
+        <article class="card stat">
+          <span class="stat__label">Storage Ready</span>
+          <span class="stat__value">{readyStorageCount}</span>
+        </article>
+        <article class="card stat">
+          <span class="stat__label">Active Scope</span>
+          <span class="stat__value">Manual</span>
+        </article>
+      </section>
+
+      <section class="card" style="margin-top: 18px;">
+        <h2>Workspace list</h2>
+        {
+          payload.data.length === 0 ? (
+            <div class="empty">
+              <h2>No Workspace yet</h2>
+              <p>Create your first Workspace to configure Projects, Database Sources, and manual Backups.</p>
+              <a class="button button--primary" href="/app/new-workspace">Create first Workspace</a>
+            </div>
+          ) : (
+            <ul class="list">
+              {payload.data.map((item) => (
+                <li class="list-item">
+                  <div>
+                    <a href={`/workspace/${item.workspace.slug}`}>
+                      <strong>{item.workspace.name}</strong>
+                    </a>
+                    <p>{item.membership.role} · {item.plan.name} · onboarding {item.workspace.onboarding_step}</p>
+                  </div>
+                  <div class="actions">
+                    <span class={`badge ${item.workspace.storage_status === 'ready' ? 'badge--ok' : 'badge--warn'}`}>
+                      Storage {item.workspace.storage_status}
+                    </span>
+                    <a class="button" href={`/workspace/${item.workspace.slug}`}>Open</a>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )
+        }
+      </section>
+    </DashboardShell>
+  </body>
+</html>

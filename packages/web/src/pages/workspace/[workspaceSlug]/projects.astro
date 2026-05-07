@@ -1,0 +1,157 @@
+---
+import DashboardShell from '../../../components/DashboardShell.astro';
+import { apiFetch, API_BASE_URL } from '../../../lib/api';
+
+const { workspaceSlug } = Astro.params;
+const workspaceResponse = await apiFetch(`/v1/workspaces/by-slug/${workspaceSlug}`, Astro.request);
+
+if (workspaceResponse.status === 401) return Astro.redirect('/login');
+if (workspaceResponse.status === 404) return Astro.redirect('/app');
+if (!workspaceResponse.ok) throw new Error('Failed to load Workspace');
+
+const workspacePayload = (await workspaceResponse.json()) as {
+  data: {
+    workspace: { id: string; name: string; slug: string };
+    membership: { role: string };
+  };
+};
+
+const { workspace, membership } = workspacePayload.data;
+const projectsResponse = await apiFetch(`/v1/workspaces/${workspace.id}/projects`, Astro.request);
+if (!projectsResponse.ok) throw new Error('Failed to load Projects');
+
+const projectsPayload = (await projectsResponse.json()) as {
+  data: Array<{ id: string; name: string; website_url: string | null }>;
+};
+
+const canCreateProject = membership.role === 'owner' || membership.role === 'admin';
+const navItems = [
+  { href: `/workspace/${workspace.slug}`, label: 'Dashboard' },
+  { href: `/workspace/${workspace.slug}/onboarding`, label: 'Onboarding' },
+  { href: `/workspace/${workspace.slug}/projects`, label: 'Projects', active: true },
+  { href: `/workspace/${workspace.slug}/backups`, label: 'Backups' },
+  { href: `/workspace/${workspace.slug}/settings/audit-log`, label: 'Audit Log' },
+];
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>{workspace.name} Projects</title>
+    <link rel="stylesheet" href="/src/styles/dashboard.css" />
+  </head>
+  <body>
+    <DashboardShell brandLabel="Workspace" brandName={workspace.name} sidebarNote={`${membership.role} · Project management`} navItems={navItems}>
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Projects</p>
+          <h1>{workspace.name}</h1>
+          <p>Group Database Sources by client, website, or application before running manual Backups.</p>
+        </div>
+        <div class="actions">
+          <a class="button" href={`/workspace/${workspace.slug}`}>Dashboard</a>
+        </div>
+      </header>
+
+      <section class="grid grid--stats" aria-label="Project summary">
+        <article class="card stat">
+          <span class="stat__label">Projects</span>
+          <span class="stat__value">{projectsPayload.data.length}</span>
+        </article>
+        <article class="card stat">
+          <span class="stat__label">Role</span>
+          <span class="stat__value">{membership.role}</span>
+        </article>
+        <article class="card stat">
+          <span class="stat__label">Create Access</span>
+          <span class="stat__value">{canCreateProject ? 'Allowed' : 'View only'}</span>
+        </article>
+      </section>
+
+      <section class="grid grid--two" style="margin-top: 18px;">
+        {
+          canCreateProject ? (
+            <article class="card">
+              <h2>Create Project</h2>
+              <form id="project-form" class="form-grid">
+                <label>
+                  Project name
+                  <input name="name" required maxlength="120" placeholder="Client website or app name" />
+                </label>
+                <label>
+                  Website URL optional
+                  <input name="website_url" maxlength="300" inputmode="url" placeholder="https://example.com" />
+                </label>
+                <button class="button button--primary" type="submit">Create Project</button>
+              </form>
+              <p id="form-message" role="status"></p>
+            </article>
+          ) : (
+            <article class="card card--soft">
+              <h2>View-only access</h2>
+              <p>Workspace Members can view Projects but cannot create them.</p>
+            </article>
+          )
+        }
+
+        <article class="card">
+          <h2>Project list</h2>
+          {
+            projectsPayload.data.length === 0 ? (
+              <div class="empty">
+                <h2>No Project yet</h2>
+                <p>Create Project before adding Database Sources.</p>
+              </div>
+            ) : (
+              <ul class="list">
+                {projectsPayload.data.map((project) => (
+                  <li class="list-item">
+                    <div>
+                      <a href={`/workspace/${workspace.slug}/projects/${project.id}`}>
+                        <strong>{project.name}</strong>
+                      </a>
+                      {project.website_url ? <p>{project.website_url}</p> : <p>No website URL</p>}
+                    </div>
+                    <a class="button" href={`/workspace/${workspace.slug}/projects/${project.id}`}>Open</a>
+                  </li>
+                ))}
+              </ul>
+            )
+          }
+        </article>
+      </section>
+    </DashboardShell>
+
+    <script is:inline define:vars={{ apiBaseUrl: API_BASE_URL, workspaceId: workspace.id }}>
+      const form = document.getElementById('project-form');
+      const message = document.getElementById('form-message');
+
+      form?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        message.textContent = 'Creating Project...';
+
+        const formData = new FormData(form);
+        const body = {
+          name: String(formData.get('name') ?? ''),
+          website_url: String(formData.get('website_url') ?? '') || undefined,
+        };
+
+        const response = await fetch(`${apiBaseUrl}/v1/workspaces/${workspaceId}/projects`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+
+        const payload = await response.json();
+        if (!response.ok) {
+          message.textContent = payload.error?.message ?? 'Project could not be created';
+          return;
+        }
+
+        window.location.reload();
+      });
+    </script>
+  </body>
+</html>

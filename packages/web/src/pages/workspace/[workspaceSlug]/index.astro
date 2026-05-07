@@ -1,0 +1,103 @@
+---
+import DashboardShell from '../../../components/DashboardShell.astro';
+import { apiFetch } from '../../../lib/api';
+
+const { workspaceSlug } = Astro.params;
+const response = await apiFetch(`/v1/workspaces/by-slug/${workspaceSlug}`, Astro.request);
+
+if (response.status === 401) {
+  return Astro.redirect('/login');
+}
+
+if (response.status === 404) {
+  return Astro.redirect('/app');
+}
+
+if (!response.ok) {
+  throw new Error('Failed to load Workspace');
+}
+
+const payload = (await response.json()) as {
+  data: {
+    workspace: {
+      id: string;
+      name: string;
+      slug: string;
+      storage_status: string;
+      onboarding_step: string;
+    };
+    membership: { role: string };
+    plan: { name: string };
+  };
+};
+
+const { workspace, membership, plan } = payload.data;
+const storageReady = workspace.storage_status === 'ready';
+const navItems = [
+  { href: `/workspace/${workspace.slug}`, label: 'Dashboard', active: true },
+  { href: `/workspace/${workspace.slug}/onboarding`, label: 'Onboarding' },
+  { href: `/workspace/${workspace.slug}/projects`, label: 'Projects' },
+  { href: `/workspace/${workspace.slug}/backups`, label: 'Backups' },
+  { href: `/workspace/${workspace.slug}/settings/audit-log`, label: 'Audit Log' },
+];
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>{workspace.name} Dashboard</title>
+    <link rel="stylesheet" href="/src/styles/dashboard.css" />
+  </head>
+  <body>
+    <DashboardShell brandLabel="Workspace" brandName={workspace.name} sidebarNote={`${membership.role} · ${plan.name}`} navItems={navItems}>
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Manual Backup dashboard</p>
+          <h1>{workspace.name}</h1>
+          <p>Monitor storage readiness, setup progress, and next actions for encrypted manual Backups.</p>
+        </div>
+        <div class="actions">
+          <a class="button" href="/app">Switch Workspace</a>
+          <a class="button button--primary" href={`/workspace/${workspace.slug}/projects`}>Manage Projects</a>
+        </div>
+      </header>
+
+      <section class="grid grid--stats" aria-label="Workspace health">
+        <article class="card stat">
+          <span class="stat__label">Storage</span>
+          <span class="stat__value">{workspace.storage_status}</span>
+          <span class={`badge ${storageReady ? 'badge--ok' : 'badge--warn'}`}>{storageReady ? 'Ready' : 'Needs action'}</span>
+        </article>
+        <article class="card stat">
+          <span class="stat__label">Plan</span>
+          <span class="stat__value">{plan.name}</span>
+        </article>
+        <article class="card stat">
+          <span class="stat__label">Role</span>
+          <span class="stat__value">{membership.role}</span>
+        </article>
+      </section>
+
+      <section class="grid grid--two" style="margin-top: 18px;">
+        <article class="card">
+          <h2>Backup operations</h2>
+          <p>Setup progress, last Backup status, storage usage, and active Database Source count will appear here.</p>
+          <div class="actions">
+            <a class="button button--primary" href={`/workspace/${workspace.slug}/projects`}>Add Database Source</a>
+            <a class="button" href={`/workspace/${workspace.slug}/backups`}>View Backups</a>
+          </div>
+        </article>
+        <article class="card card--soft">
+          <h2>Next actions</h2>
+          <ul class="list">
+            <li class="list-item"><a href={`/workspace/${workspace.slug}/projects`}>Create Project</a></li>
+            <li class="list-item">Add Database Source</li>
+            <li class="list-item">Run first manual Backup</li>
+            <li class="list-item">Review Audit Log</li>
+          </ul>
+        </article>
+      </section>
+    </DashboardShell>
+  </body>
+</html>

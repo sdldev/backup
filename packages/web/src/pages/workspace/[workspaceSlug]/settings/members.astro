@@ -1,0 +1,193 @@
+---
+import DashboardShell from '../../../../components/DashboardShell.astro';
+import { apiFetch } from '../../../../lib/api';
+
+const { workspaceSlug } = Astro.params;
+const workspaceResponse = await apiFetch(`/v1/workspaces/by-slug/${workspaceSlug}`, Astro.request);
+
+if (workspaceResponse.status === 401) return Astro.redirect('/login');
+if (workspaceResponse.status === 404) return Astro.redirect('/app');
+if (!workspaceResponse.ok) throw new Error('Failed to load Workspace');
+
+const workspacePayload = (await workspaceResponse.json()) as {
+  data: { workspace: { id: string; name: string; slug: string }; membership: { role: 'owner' | 'admin' | 'member' } };
+};
+const { workspace, membership } = workspacePayload.data;
+
+const formData = Astro.request.method === 'POST' ? await Astro.request.formData() : null;
+let formMessage = '';
+let inviteLink = '';
+
+if (formData) {
+  const action = String(formData.get('action') ?? '');
+  let response: Response | null = null;
+
+  if (action === 'create-invite') {
+    response = await apiFetch(`/v1/workspaces/${workspace.id}/invites`, Astro.request, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: String(formData.get('email') ?? ''), role: String(formData.get('role') ?? 'member') }),
+    });
+    if (response.ok) {
+      const payload = (await response.json()) as { invite_token: string };
+      inviteLink = `/invite/${payload.invite_token}`;
+      formMessage = 'Invite created. Copy this link now; token is not stored in plaintext.';
+    }
+  }
+
+  if (action === 'change-role') {
+    const memberUserId = String(formData.get('member_user_id') ?? '');
+    response = await apiFetch(`/v1/workspaces/${workspace.id}/members/${memberUserId}/role`, Astro.request, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ role: String(formData.get('role') ?? 'member') }),
+    });
+    if (response.ok) formMessage = 'Member role updated.';
+  }
+
+  if (action === 'remove-member') {
+    const memberUserId = String(formData.get('member_user_id') ?? '');
+    response = await apiFetch(`/v1/workspaces/${workspace.id}/members/${memberUserId}`, Astro.request, { method: 'DELETE' });
+    if (response.ok) formMessage = 'Member removed.';
+  }
+
+  if (action === 'transfer-ownership') {
+    response = await apiFetch(`/v1/workspaces/${workspace.id}/members/ownership-transfer`, Astro.request, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ new_owner_user_id: String(formData.get('new_owner_user_id') ?? '') }),
+    });
+    if (response.ok) formMessage = 'Ownership transferred.';
+  }
+
+  if (response && !response.ok) {
+    const payload = await response.json().catch(() => null);
+    formMessage = payload?.error?.message ?? 'Member action failed.';
+  }
+}
+
+const membersResponse = await apiFetch(`/v1/workspaces/${workspace.id}/members`, Astro.request);
+if (!membersResponse.ok) throw new Error('Failed to load Workspace members');
+
+const membersPayload = (await membersResponse.json()) as {
+  data: Array<{
+    id: string;
+    user_id: string;
+    role: 'owner' | 'admin' | 'member';
+    joined_at: string;
+    user?: { id: string; email: string; name: string; avatar_url: string | null };
+  }>;
+};
+
+const ownerCount = membersPayload.data.filter((member) => member.role === 'owner').length;
+const adminCount = membersPayload.data.filter((member) => member.role === 'admin').length;
+const canManageMembers = membership.role === 'owner' || membership.role === 'admin';
+const canTransferOwnership = membership.role === 'owner';
+const navItems = [
+  { href: `/workspace/${workspace.slug}`, label: 'Dashboard' },
+  { href: `/workspace/${workspace.slug}/onboarding`, label: 'Onboarding' },
+  { href: `/workspace/${workspace.slug}/projects`, label: 'Projects' },
+  { href: `/workspace/${workspace.slug}/backups`, label: 'Backups' },
+  { href: `/workspace/${workspace.slug}/settings/members`, label: 'Members', active: true },
+  { href: `/workspace/${workspace.slug}/settings/audit-log`, label: 'Audit Log' },
+];
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>{workspace.name} Members</title>
+    <link rel="stylesheet" href="/src/styles/dashboard.css" />
+  </head>
+  <body>
+    <DashboardShell brandLabel="Workspace" brandName={workspace.name} sidebarNote={`${membership.role} · Team access`} navItems={navItems}>
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Workspace settings</p>
+          <h1>Members</h1>
+          <p>Manage who can configure Database Sources, run Backups, and review sensitive Workspace activity.</p>
+        </div>
+        <div class="actions">
+          <a class="button" href={`/workspace/${workspace.slug}/settings/audit-log`}>Audit Log</a>
+        </div>
+      </header>
+
+      {formMessage ? <div class="card notice"><strong>{formMessage}</strong>{inviteLink ? <p><code>{new URL(inviteLink, Astro.url.origin).toString()}</code></p> : null}</div> : null}
+
+      <section class="grid grid--stats" aria-label="Members summary">
+        <article class="card stat"><span class="stat__label">Members</span><span class="stat__value">{membersPayload.data.length}</span></article>
+        <article class="card stat"><span class="stat__label">Owners</span><span class="stat__value">{ownerCount}</span></article>
+        <article class="card stat"><span class="stat__label">Admins</span><span class="stat__value">{adminCount}</span></article>
+      </section>
+
+      {canManageMembers ? (
+        <section class="card" style="margin-top: 18px;">
+          <div class="section-heading"><div><p class="eyebrow">Invite teammate</p><h2>Create invite</h2></div><span class="badge">Token shown once</span></div>
+          <form method="post" class="stack-form">
+            <input type="hidden" name="action" value="create-invite" />
+            <label>Email <input name="email" type="email" required placeholder="teammate@example.com" /></label>
+            <label>Role
+              <select name="role">
+                <option value="member">Member</option>
+                {membership.role === 'owner' ? <option value="admin">Admin</option> : null}
+              </select>
+            </label>
+            <button class="button" type="submit">Create invite</button>
+          </form>
+        </section>
+      ) : null}
+
+      <section class="card" style="margin-top: 18px;">
+        <div class="section-heading"><div><p class="eyebrow">Team access</p><h2>Workspace members</h2></div>{canManageMembers ? <span class="badge">Manage</span> : <span class="badge">View only</span>}</div>
+        {membersPayload.data.length === 0 ? (
+          <div class="empty"><h2>No members yet</h2><p>Workspace members will appear here after invites are accepted.</p></div>
+        ) : (
+          <ol class="list">
+            {membersPayload.data.map((member) => (
+              <li class="list-item">
+                <div>
+                  <strong>{member.user?.name ?? member.user?.email ?? member.user_id}</strong>
+                  <p>{member.user?.email ?? member.user_id} · joined {member.joined_at}</p>
+                </div>
+                <div class="actions">
+                  <span class="badge">{member.role}</span>
+                  {membership.role === 'owner' && member.role !== 'owner' ? (
+                    <form method="post" class="inline-form">
+                      <input type="hidden" name="action" value="change-role" />
+                      <input type="hidden" name="member_user_id" value={member.user_id} />
+                      <select name="role"><option value="member" selected={member.role === 'member'}>Member</option><option value="admin" selected={member.role === 'admin'}>Admin</option></select>
+                      <button class="button button--ghost" type="submit">Update</button>
+                    </form>
+                  ) : null}
+                  {canManageMembers && member.role !== 'owner' ? (
+                    <form method="post" class="inline-form">
+                      <input type="hidden" name="action" value="remove-member" />
+                      <input type="hidden" name="member_user_id" value={member.user_id} />
+                      <button class="button button--ghost" type="submit">Remove</button>
+                    </form>
+                  ) : null}
+                </div>
+              </li>
+            ))}
+          </ol>
+        )}
+      </section>
+
+      {canTransferOwnership ? (
+        <section class="card" style="margin-top: 18px;">
+          <div class="section-heading"><div><p class="eyebrow">Ownership</p><h2>Transfer ownership</h2></div><span class="badge">Admin target only</span></div>
+          <form method="post" class="stack-form">
+            <input type="hidden" name="action" value="transfer-ownership" />
+            <label>New Owner
+              <select name="new_owner_user_id" required>
+                {membersPayload.data.filter((member) => member.role === 'admin').map((member) => <option value={member.user_id}>{member.user?.email ?? member.user_id}</option>)}
+              </select>
+            </label>
+            <button class="button" type="submit">Transfer ownership</button>
+          </form>
+        </section>
+      ) : null}
+    </DashboardShell>
+  </body>
+</html>

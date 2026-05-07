@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "plan_requests_one_pending_per_workspace_uidx" ON "plan_requests" USING btree ("workspace_id") WHERE "plan_requests"."status" = 'pending';
