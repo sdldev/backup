@@ -1,9 +1,13 @@
 ---
 import DashboardShell from '../../components/DashboardShell.astro';
+import { buildAppNavGroups } from '../../lib/dashboard-nav';
 import FormSection from '../../components/dashboard/FormSection.astro';
 import PageHeader from '../../components/dashboard/PageHeader.astro';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { Field, FieldGroup, FieldLabel } from '../../components/ui/field';
+import { Input } from '../../components/ui/input';
+import { Select } from '../../components/ui/select';
 import { API_BASE_URL, apiFetch } from '../../lib/api';
 
 const sessionResponse = await apiFetch('/v1/session', Astro.request);
@@ -13,9 +17,10 @@ if (!sessionResponse.ok) return Astro.redirect('/login?error=load_failed');
 
 <DashboardShell
   brandLabel="Manual Backup"
+  pageTitle="New Workspace"
   brandName="Portal"
   sidebarNote="Create tenant boundary for Projects, Database Sources, Backups, members, limits, and Audit Logs."
-  navItems={[{ href: '/app', label: 'Workspaces' }, { href: '/app/new-workspace', label: 'New Workspace', active: true }]}
+  navGroups={buildAppNavGroups(Astro.url.pathname)}
 >
   <PageHeader eyebrow="New Tenant Onboarding" title="Create Workspace" description="Workspace groups Projects, Database Sources, Backups, members, plan limits, and Audit Logs.">
     <Button slot="actions" asChild variant="outline">
@@ -25,27 +30,29 @@ if (!sessionResponse.ok) return Astro.redirect('/login?error=load_failed');
 
   <section class="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
     <FormSection title="Workspace details">
-      <form id="workspace-form" class="grid gap-4">
-        <label class="grid gap-2 text-sm font-medium">
-          Workspace name
-          <input class="h-9 rounded-md border bg-background px-3 text-sm" name="name" required maxlength="120" autocomplete="organization" placeholder="Agency or client name" />
-        </label>
-        <label class="grid gap-2 text-sm font-medium">
-          Workspace slug optional
-          <input class="h-9 rounded-md border bg-background px-3 text-sm" name="slug" maxlength="48" pattern="[a-z0-9-]+" placeholder="client-name" />
-        </label>
-        <label class="grid gap-2 text-sm font-medium">
-          Timezone
-          <input class="h-9 rounded-md border bg-background px-3 text-sm" name="timezone" required value="Asia/Jakarta" />
-        </label>
-        <label class="grid gap-2 text-sm font-medium">
-          Requested plan
-          <select class="h-9 rounded-md border bg-background px-3 text-sm" name="requested_plan">
-            <option value="basic">Basic</option>
-            <option value="pro">Pro request</option>
-            <option value="agency">Agency request</option>
-          </select>
-        </label>
+      <form id="workspace-form" class="flex flex-col gap-4">
+        <FieldGroup>
+          <Field>
+            <FieldLabel htmlFor="workspace-name">Workspace name</FieldLabel>
+            <Input id="workspace-name" name="name" required maxLength={120} autoComplete="organization" placeholder="Agency or client name" />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="workspace-slug">Workspace slug optional</FieldLabel>
+            <Input id="workspace-slug" name="slug" maxLength={48} pattern="[a-z0-9-]+" placeholder="client-name" />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="workspace-timezone">Timezone</FieldLabel>
+            <Input id="workspace-timezone" name="timezone" required value="Asia/Jakarta" />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="workspace-requested-plan">Requested plan</FieldLabel>
+            <Select id="workspace-requested-plan" name="requested_plan">
+              <option value="basic">Basic</option>
+              <option value="pro">Pro request</option>
+              <option value="agency">Agency request</option>
+            </Select>
+          </Field>
+        </FieldGroup>
         <Button type="submit">Create Workspace</Button>
       </form>
       <p class="mt-4 text-sm text-muted-foreground" id="form-message" role="status"></p>
@@ -74,6 +81,7 @@ if (!sessionResponse.ok) return Astro.redirect('/login?error=load_failed');
   form?.addEventListener('submit', async (event) => {
     event.preventDefault();
     message.textContent = 'Creating Workspace...';
+    message.classList.remove('text-destructive');
 
     const formData = new FormData(form);
     const body = {
@@ -93,6 +101,7 @@ if (!sessionResponse.ok) return Astro.redirect('/login?error=load_failed');
     const payload = await response.json();
     if (!response.ok) {
       message.textContent = payload.error?.message ?? 'Workspace could not be created';
+      message.classList.add('text-destructive');
       return;
     }
 

@@ -1,5 +1,6 @@
 ---
 import DashboardShell from '../../../components/DashboardShell.astro';
+import { buildWorkspaceNavGroups } from '../../../lib/dashboard-nav';
 import PageHeader from '../../../components/dashboard/PageHeader.astro';
 import StatCard from '../../../components/dashboard/StatCard.astro';
 import StatusBadge from '../../../components/dashboard/StatusBadge.astro';
@@ -34,16 +35,9 @@ const checklist = [
   { label: 'Team invite optional', done: false },
 ];
 const completedCount = checklist.filter((item) => item.done).length;
-const navItems = [
-  { href: `/workspace/${workspace.slug}`, label: 'Dashboard' },
-  { href: `/workspace/${workspace.slug}/onboarding`, label: 'Onboarding', active: true },
-  { href: `/workspace/${workspace.slug}/projects`, label: 'Projects' },
-  { href: `/workspace/${workspace.slug}/backups`, label: 'Backups' },
-  { href: `/workspace/${workspace.slug}/settings/audit-log`, label: 'Audit Log' },
-];
 ---
 
-<DashboardShell brandLabel="Workspace" brandName={workspace.name} sidebarNote={`${membership.role} · ${plan.name}`} navItems={navItems}>
+<DashboardShell brandLabel="Workspace" brandName={workspace.name} pageTitle="Onboarding" sidebarNote={`${membership.role} · ${plan.name}`} navGroups={buildWorkspaceNavGroups(workspace.slug, Astro.url.pathname)}>
   <PageHeader eyebrow="Onboarding checklist" title={workspace.name} description="Prepare Workspace for encrypted manual Backups. Scheduled Backups are Phase 2.">
     <Button slot="actions" asChild variant="outline"><a href={`/workspace/${workspace.slug}/projects`}>Projects</a></Button>
     <Button slot="actions" type="button" id="retry-storage">Provision / retry Storage</Button>
@@ -77,7 +71,7 @@ const navItems = [
 
     <Card className="bg-muted/30">
       <CardHeader><CardTitle>Storage provisioning</CardTitle></CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="flex flex-col gap-4">
         <p class="text-sm leading-6 text-muted-foreground">Backup Jobs are blocked until current Backup Storage config is active.</p>
         <p class="text-sm text-muted-foreground" id="storage-message" role="status"></p>
         <Button type="button" id="retry-storage-secondary">Provision / retry Backup Storage</Button>
@@ -93,6 +87,7 @@ const navItems = [
   buttons.forEach((button) => {
     button.addEventListener('click', async () => {
       message.textContent = 'Provisioning Backup Storage...';
+      message.classList.remove('text-destructive');
       const response = await fetch(`${apiBaseUrl}/v1/workspaces/${workspaceId}/storage/provision/retry`, {
         method: 'POST',
         credentials: 'include',
@@ -101,6 +96,7 @@ const navItems = [
       message.textContent = response.ok
         ? `Backup Storage ${payload.data.workspace.storage_status}`
         : payload.error?.message ?? 'Backup Storage provisioning failed';
+      if (!response.ok) message.classList.add('text-destructive');
       if (response.ok) window.location.reload();
     });
   });
