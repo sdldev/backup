@@ -1,133 +1,89 @@
 ---
 import DashboardShell from '../../../../components/DashboardShell.astro';
+import PageHeader from '../../../../components/dashboard/PageHeader.astro';
+import StatCard from '../../../../components/dashboard/StatCard.astro';
+import { Badge } from '../../../../components/ui/badge';
+import { Button } from '../../../../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../../components/ui/card';
 import { buildWorkspaceNavGroups } from '../../../../lib/dashboard-nav';
 import { apiFetch, API_BASE_URL } from '../../../../lib/api';
 
 const { workspaceSlug, jobId } = Astro.params;
 const workspaceResponse = await apiFetch(`/v1/workspaces/by-slug/${workspaceSlug}`, Astro.request);
-
 if (workspaceResponse.status === 401) return Astro.redirect('/login');
 if (workspaceResponse.status === 404) return Astro.redirect('/app');
 if (!workspaceResponse.ok) return Astro.redirect('/login?error=load_failed');
-
-const workspacePayload = (await workspaceResponse.json()) as {
-  data: { workspace: { id: string; name: string; slug: string }; membership: { role: string } };
-};
+const workspacePayload = (await workspaceResponse.json()) as { data: { workspace: { id: string; name: string; slug: string }; membership: { role: string } } };
 const { workspace, membership } = workspacePayload.data;
-
 const jobResponse = await apiFetch(`/v1/workspaces/${workspace.id}/backup-jobs/${jobId}`, Astro.request);
 if (jobResponse.status === 404) return Astro.redirect(`/workspace/${workspace.slug}`);
 if (!jobResponse.ok) return Astro.redirect('/login?error=load_failed');
-
-const jobPayload = (await jobResponse.json()) as {
-  data: {
-    id: string;
-    database_source_id: string;
-    trigger: string;
-    status: string;
-    stage: string;
-    attempt_count: number;
-    max_attempts: number;
-    user_error_message: string | null;
-    internal_error_ref: string | null;
-    queued_at: string;
-    started_at: string | null;
-    finished_at: string | null;
-  };
-};
+const jobPayload = (await jobResponse.json()) as { data: { id: string; database_source_id: string; trigger: string; status: string; stage: string; attempt_count: number; max_attempts: number; user_error_message: string | null; internal_error_ref: string | null; queued_at: string; started_at: string | null; finished_at: string | null } };
 const job = jobPayload.data;
 const canCancel = job.status === 'queued' || job.status === 'running';
 ---
 
+<DashboardShell brandLabel="Workspace" brandName={workspace.name} pageTitle="Backup Job" sidebarNote={`${membership.role} · Backup Job`} navGroups={buildWorkspaceNavGroups(workspace.slug, Astro.url.pathname)}>
+  <PageHeader eyebrow="Backup Job" title={job.id} description="Track live lifecycle state for manual Backup execution.">
+    <Button slot="actions" asChild variant="outline"><a href={`/workspace/${workspace.slug}/projects`}>Projects</a></Button>
+    <Button slot="actions" asChild variant="outline"><a href={`/workspace/${workspace.slug}/backups`}>Backups</a></Button>
+    <Button slot="actions" type="button" id="cancel-job" disabled={!canCancel}>Cancel Job</Button>
+  </PageHeader>
+  <section class="grid gap-4 md:grid-cols-3" aria-label="Backup Job summary">
+    <StatCard label="Status" value={job.status}><Badge variant="secondary">{job.stage}</Badge></StatCard>
+    <StatCard label="Trigger" value={job.trigger} />
+    <StatCard label="Attempts" value={`${job.attempt_count} / ${job.max_attempts}`} />
+  </section>
+  <section class="mt-6 grid gap-4 lg:grid-cols-2">
+    <Card>
+      <CardHeader><CardTitle>Execution detail</CardTitle></CardHeader>
+      <CardContent>
+        <dl class="detail-list">
+          <dt>Queued at</dt><dd>{job.queued_at}</dd>
+          <dt>Started at</dt><dd>{job.started_at ?? 'Not started'}</dd>
+          <dt>Finished at</dt><dd>{job.finished_at ?? 'Not finished'}</dd>
+          <dt>Database Source</dt><dd>{job.database_source_id}</dd>
+        </dl>
+        {job.user_error_message ? <p class="mt-4 text-sm text-destructive">{job.user_error_message}</p> : null}
+        {job.internal_error_ref ? <p class="mt-2 text-sm text-muted-foreground">Support reference: {job.internal_error_ref}</p> : null}
+        <p id="job-message" class="mt-4 text-sm text-muted-foreground" role="status"></p>
+      </CardContent>
+    </Card>
+    <Card className="bg-muted/30">
+      <CardHeader><CardTitle>Live events scaffold</CardTitle></CardHeader>
+      <CardContent className="grid gap-3 text-sm text-muted-foreground">
+        <p id="event-state">Waiting for current state...</p>
+        <p>Stream emits sanitized Job state only. Raw dump output and secrets are never exposed.</p>
+      </CardContent>
+    </Card>
+  </section>
+</DashboardShell>
 
-  
-    <DashboardShell brandLabel="Workspace" brandName={workspace.name} pageTitle="Backup Job" sidebarNote={`${membership.role} · Backup Job`} navGroups={buildWorkspaceNavGroups(workspace.slug, Astro.url.pathname)}>
-        <header class="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Backup Job</p>
-            <h1>{job.id}</h1>
-            <p>Track live lifecycle state for manual Backup execution.</p>
-          </div>
-          <div class="flex flex-wrap gap-2">
-            <a class="inline-flex h-9 items-center justify-center rounded-md border bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50" href={`/workspace/${workspace.slug}/projects`}>Projects</a>
-            <a class="inline-flex h-9 items-center justify-center rounded-md border bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50" href={`/workspace/${workspace.slug}/backups`}>Backups</a>
-            <button class="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50" type="button" id="cancel-job" disabled={!canCancel}>Cancel Job</button>
-          </div>
-        </header>
+<script is:inline define:vars={{ apiBaseUrl: API_BASE_URL, workspaceId: workspace.id, jobId: job.id }}>
+  const button = document.getElementById('cancel-job');
+  const message = document.getElementById('job-message');
+  const eventState = document.getElementById('event-state');
+  const events = new EventSource(`${apiBaseUrl}/v1/workspaces/${workspaceId}/backup-jobs/${jobId}/events`, { withCredentials: true });
 
-        <section class="grid gap-4 md:grid-cols-3" aria-label="Backup Job summary">
-          <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
-            <span class="text-sm font-medium text-muted-foreground">Status</span>
-            <span class="block text-3xl font-semibold tracking-tight">{job.status}</span>
-            <span class={`inline-flex rounded-md px-2.5 py-0.5 text-xs font-semibold text-white ${job.status === 'succeeded' ? 'bg-emerald-500' : job.status === 'failed' ? 'bg-amber-500' : ''}`}>{job.stage}</span>
-          </article>
-          <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
-            <span class="text-sm font-medium text-muted-foreground">Trigger</span>
-            <span class="block text-3xl font-semibold tracking-tight">{job.trigger}</span>
-          </article>
-          <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
-            <span class="text-sm font-medium text-muted-foreground">Attempts</span>
-            <span class="block text-3xl font-semibold tracking-tight">{job.attempt_count} / {job.max_attempts}</span>
-          </article>
-        </section>
+  events.addEventListener('state', (event) => {
+    const data = JSON.parse(event.data);
+    eventState.textContent = `${data.status} · ${data.stage}`;
+  });
+  events.onerror = () => {
+    eventState.textContent = 'Live events unavailable. Refresh page for latest status.';
+    events.close();
+  };
 
-        <section class="mt-6 grid gap-4 lg:grid-cols-2">
-          <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
-            <h2>Execution detail</h2>
-            <dl class="detail-list">
-              <dt>Queued at</dt>
-              <dd>{job.queued_at}</dd>
-              <dt>Started at</dt>
-              <dd>{job.started_at ?? 'Not started'}</dd>
-              <dt>Finished at</dt>
-              <dd>{job.finished_at ?? 'Not finished'}</dd>
-              <dt>Database Source</dt>
-              <dd>{job.database_source_id}</dd>
-            </dl>
-            {job.user_error_message ? <p>{job.user_error_message}</p> : null}
-            {job.internal_error_ref ? <p>Support reference: {job.internal_error_ref}</p> : null}
-            <p id="job-message" role="status"></p>
-          </article>
-
-          <article class="rounded-xl border bg-muted/30 p-5 text-card-foreground shadow-sm">
-            <h2>Live events scaffold</h2>
-            <p id="event-state">Waiting for current state...</p>
-            <p>Stream emits sanitized Job state only. Raw dump output and secrets are never exposed.</p>
-          </article>
-        </section>
-    </DashboardShell>
-
-    <script is:inline define:vars={{ apiBaseUrl: API_BASE_URL, workspaceId: workspace.id, jobId: job.id }}>
-      const button = document.getElementById('cancel-job');
-      const message = document.getElementById('job-message');
-
-      const eventState = document.getElementById('event-state');
-      const events = new EventSource(`${apiBaseUrl}/v1/workspaces/${workspaceId}/backup-jobs/${jobId}/events`, {
-        withCredentials: true,
-      });
-      events.addEventListener('state', (event) => {
-        const data = JSON.parse(event.data);
-        eventState.textContent = `${data.status} · ${data.stage}`;
-      });
-      events.onerror = () => {
-        eventState.textContent = 'Live events unavailable. Refresh page for latest status.';
-        events.close();
-      };
-
-      button?.addEventListener('click', async () => {
-        message.textContent = 'Cancelling Backup Job...';
-        const response = await fetch(`${apiBaseUrl}/v1/workspaces/${workspaceId}/backup-jobs/${jobId}/cancel`, {
-          method: 'POST',
-          credentials: 'include',
-        });
-        const payload = await response.json();
-        if (!response.ok) {
-          message.textContent = payload.error?.message ?? 'Backup Job could not be cancelled';
-          return;
-        }
-        window.location.reload();
-      });
-
-    </script>
-  
-
+  button?.addEventListener('click', async () => {
+    message.textContent = 'Cancelling Backup Job...';
+    message.classList.remove('text-destructive');
+    const response = await fetch(`${apiBaseUrl}/v1/workspaces/${workspaceId}/backup-jobs/${jobId}/cancel`, { method: 'POST', credentials: 'include' });
+    const payload = await response.json();
+    if (!response.ok) {
+      message.textContent = payload.error?.message ?? 'Backup Job could not be cancelled';
+      message.classList.add('text-destructive');
+      return;
+    }
+    window.location.reload();
+  });
+</script>

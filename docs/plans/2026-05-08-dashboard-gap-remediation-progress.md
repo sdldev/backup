@@ -13,8 +13,8 @@ Last updated: 2026-05-08T00:00:00+07:00
 | 4 | ✅ done | Convert reusable dashboard wrappers to shadcn composition (checkpoint: none) | 26fbd92 |
 | 5 | ✅ done | Normalize Projects page with dashboard wrappers and shadcn form controls (checkpoint: none) | c112043 |
 | 6 | ✅ done | Normalize Members settings page with dashboard wrappers and shadcn controls (checkpoint: done) | 758f283 |
-| 7 | 🔄 in-progress | Normalize project detail page and nested data-source/backup actions (checkpoint: none) | — |
-| 8 | ⬜ pending | Normalize audit log and backup detail pages (checkpoint: none) | — |
+| 7 | ✅ done | Normalize project detail page and nested data-source/backup actions (checkpoint: none) | 647aafb |
+| 8 | 🔄 in-progress | Normalize audit log and backup detail pages (checkpoint: none) | — |
 | 9 | ⬜ pending | Normalize onboarding and new-workspace forms (checkpoint: none) | — |
 | 10 | ⬜ pending | Clean dashboard tokens and raw color drift (checkpoint: done) | — |
 | 11 | ⬜ pending | Final dashboard consistency smoke pass (checkpoint: done) | — |

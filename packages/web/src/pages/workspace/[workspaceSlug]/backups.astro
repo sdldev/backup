@@ -1,5 +1,11 @@
 ---
 import DashboardShell from '../../../components/DashboardShell.astro';
+import EmptyState from '../../../components/dashboard/EmptyState.astro';
+import PageHeader from '../../../components/dashboard/PageHeader.astro';
+import StatCard from '../../../components/dashboard/StatCard.astro';
+import { Badge } from '../../../components/ui/badge';
+import { Button } from '../../../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { buildWorkspaceNavGroups } from '../../../lib/dashboard-nav';
 import { apiFetch } from '../../../lib/api';
 
@@ -8,91 +14,48 @@ const workspaceResponse = await apiFetch(`/v1/workspaces/by-slug/${workspaceSlug
 if (workspaceResponse.status === 401) return Astro.redirect('/login');
 if (workspaceResponse.status === 404) return Astro.redirect('/app');
 if (!workspaceResponse.ok) return Astro.redirect('/login?error=load_failed');
-
-const workspacePayload = (await workspaceResponse.json()) as {
-  data: { workspace: { id: string; name: string; slug: string }; membership: { role: string } };
-};
+const workspacePayload = (await workspaceResponse.json()) as { data: { workspace: { id: string; name: string; slug: string }; membership: { role: string } } };
 const { workspace, membership } = workspacePayload.data;
-
 const backupsResponse = await apiFetch(`/v1/workspaces/${workspace.id}/backups`, Astro.request);
 if (!backupsResponse.ok) return Astro.redirect('/login?error=load_failed');
-
-const backupsPayload = (await backupsResponse.json()) as {
-  data: Array<{
-    id: string;
-    status: string;
-    format: string;
-    download_filename: string;
-    encrypted_size_bytes: number;
-    original_size_bytes: number | null;
-    retention_expires_at: string;
-    created_at: string;
-  }>;
-};
-
+const backupsPayload = (await backupsResponse.json()) as { data: Array<{ id: string; status: string; format: string; download_filename: string; encrypted_size_bytes: number; original_size_bytes: number | null; retention_expires_at: string; created_at: string }> };
 const retainedBackupCount = backupsPayload.data.filter((backup) => backup.status === 'succeeded').length;
 const totalEncryptedBytes = backupsPayload.data.reduce((total, backup) => total + backup.encrypted_size_bytes, 0);
 const formatBytes = (bytes: number) => new Intl.NumberFormat('en', { notation: 'compact' }).format(bytes) + ' B';
 ---
 
-
-  
-    <DashboardShell brandLabel="Workspace" brandName={workspace.name} pageTitle="Backups" sidebarNote={`${membership.role} · Backup history`} navGroups={buildWorkspaceNavGroups(workspace.slug, Astro.url.pathname)}>
-        <header class="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Backup history</p>
-            <h1>{workspace.name}</h1>
-            <p>Browse retained Backup artifacts. Object keys and checksums stay hidden from UI.</p>
-          </div>
-          <div class="flex flex-wrap gap-2">
-            <a class="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50" href={`/workspace/${workspace.slug}/projects`}>Run Backup from Source</a>
-          </div>
-        </header>
-
-        <section class="grid gap-4 md:grid-cols-3" aria-label="Backup summary">
-          <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
-            <span class="text-sm font-medium text-muted-foreground">Backups</span>
-            <span class="block text-3xl font-semibold tracking-tight">{backupsPayload.data.length}</span>
-          </article>
-          <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
-            <span class="text-sm font-medium text-muted-foreground">Retained</span>
-            <span class="block text-3xl font-semibold tracking-tight">{retainedBackupCount}</span>
-          </article>
-          <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
-            <span class="text-sm font-medium text-muted-foreground">Encrypted Size</span>
-            <span class="block text-3xl font-semibold tracking-tight">{formatBytes(totalEncryptedBytes)}</span>
-          </article>
-        </section>
-
-        <section class="mt-6 rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
-          <h2>Backup list</h2>
-          {
-            backupsPayload.data.length === 0 ? (
-              <div class="empty">
-                <h2>No Backup yet</h2>
-                <p>Run a manual Backup from an enabled Database Source.</p>
-                <a class="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50" href={`/workspace/${workspace.slug}/projects`}>Open Projects</a>
+<DashboardShell brandLabel="Workspace" brandName={workspace.name} pageTitle="Backups" sidebarNote={`${membership.role} · Backup history`} navGroups={buildWorkspaceNavGroups(workspace.slug, Astro.url.pathname)}>
+  <PageHeader eyebrow="Backup history" title={workspace.name} description="Browse retained Backup artifacts. Object keys and checksums stay hidden from UI.">
+    <Button slot="actions" asChild><a href={`/workspace/${workspace.slug}/projects`}>Run Backup from Source</a></Button>
+  </PageHeader>
+  <section class="grid gap-4 md:grid-cols-3" aria-label="Backup summary">
+    <StatCard label="Backups" value={backupsPayload.data.length} />
+    <StatCard label="Retained" value={retainedBackupCount} />
+    <StatCard label="Encrypted Size" value={formatBytes(totalEncryptedBytes)} />
+  </section>
+  <Card className="mt-6">
+    <CardHeader><CardTitle>Backup list</CardTitle></CardHeader>
+    <CardContent>
+      {backupsPayload.data.length === 0 ? (
+        <EmptyState title="No Backup yet" description="Run a manual Backup from an enabled Database Source.">
+          <Button slot="action" asChild><a href={`/workspace/${workspace.slug}/projects`}>Open Projects</a></Button>
+        </EmptyState>
+      ) : (
+        <ul class="grid gap-3">
+          {backupsPayload.data.map((backup) => (
+            <li class="flex flex-col justify-between gap-4 rounded-lg border p-3 lg:flex-row lg:items-center">
+              <div class="min-w-0">
+                <a class="font-medium hover:underline" href={`/workspace/${workspace.slug}/backups/${backup.id}`}>{backup.download_filename}</a>
+                <p class="text-sm text-muted-foreground">{backup.format} · {formatBytes(backup.encrypted_size_bytes)} · expires {backup.retention_expires_at}</p>
               </div>
-            ) : (
-              <ul class="grid gap-3">
-                {backupsPayload.data.map((backup) => (
-                  <li class="flex items-center justify-between gap-4 rounded-lg border p-3">
-                    <div>
-                      <a href={`/workspace/${workspace.slug}/backups/${backup.id}`}>
-                        <strong>{backup.download_filename}</strong>
-                      </a>
-                      <p>{backup.format} · {formatBytes(backup.encrypted_size_bytes)} · expires {backup.retention_expires_at}</p>
-                    </div>
-                    <div class="flex flex-wrap gap-2">
-                      <span class={`inline-flex rounded-md px-2.5 py-0.5 text-xs font-semibold text-white ${backup.status === 'succeeded' ? 'bg-emerald-500' : 'bg-amber-500'}`}>{backup.status}</span>
-                      <a class="inline-flex h-9 items-center justify-center rounded-md border bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50" href={`/workspace/${workspace.slug}/backups/${backup.id}`}>Open</a>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )
-          }
-        </section>
-    </DashboardShell>
-  
-
+              <div class="flex flex-wrap gap-2">
+                <Badge variant="secondary">{backup.status}</Badge>
+                <Button asChild variant="outline"><a href={`/workspace/${workspace.slug}/backups/${backup.id}`}>Open</a></Button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </CardContent>
+  </Card>
+</DashboardShell>
