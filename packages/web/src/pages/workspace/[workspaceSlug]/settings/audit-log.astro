@@ -40,14 +40,8 @@ const navItems = [
 ];
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width" />
-    <title>{workspace.name} Audit Log</title>
-    <link rel="stylesheet" href="/src/styles/dashboard.css" />
-  </head>
-  <body>
+
+  
     <DashboardShell brandLabel="Workspace" brandName={workspace.name} sidebarNote={`${membership.role} · Security events`} navItems={navItems}>
         <header class="topbar">
           <div>
@@ -100,5 +94,5 @@ const navItems = [
           }
         </section>
     </DashboardShell>
-  </body>
-</html>
+  
+

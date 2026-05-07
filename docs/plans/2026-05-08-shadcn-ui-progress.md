@@ -13,8 +13,8 @@ Last updated: 2026-05-08T04:17:00+07:00
 | 4 | ✅ done | Replace DashboardShell with modern responsive app shell (checkpoint: done) | e564c60 |
 | 5 | ✅ done | Add dashboard composition components for stats, actions, empty states, and forms | ae637b9 |
 | 6 | ✅ done | Migrate workspace list and workspace creation flows | f8d256f |
-| 7 | 🔄 in-progress | Migrate workspace dashboard and onboarding pages | — |
-| 8 | ⬜ pending | Add hybrid data table wrapper and migrate Projects views (checkpoint: done) | — |
+| 7 | ✅ done | Migrate workspace dashboard and onboarding pages | b30df10 |
+| 8 | 🔄 in-progress | Add hybrid data table wrapper and migrate Projects views (checkpoint: done) | — |
 | 9 | ⬜ pending | Migrate Backups and Backup Job views | — |
 | 10 | ⬜ pending | Migrate members and audit log admin views | — |
 | 11 | ⬜ pending | Remove legacy dashboard CSS dependency (checkpoint: done) | — |

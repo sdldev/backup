@@ -1,0 +1,18 @@
+---
+const { caption } = Astro.props as { caption?: string };
+---
+
+<div class="overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm">
+  <div class="overflow-x-auto">
+    <table class="w-full caption-bottom text-sm">
+      {caption ? <caption class="mt-4 text-sm text-muted-foreground">{caption}</caption> : null}
+      <thead class="border-b bg-muted/40">
+        <slot name="head" />
+      </thead>
+      <tbody class="divide-y">
+        <slot />
+      </tbody>
+    </table>
+  </div>
+  <slot name="empty" />
+</div>

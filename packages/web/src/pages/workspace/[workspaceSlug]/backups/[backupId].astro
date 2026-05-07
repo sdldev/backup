@@ -39,14 +39,8 @@ const navItems = [
 ];
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width" />
-    <title>{backup.download_filename}</title>
-    <link rel="stylesheet" href="/src/styles/dashboard.css" />
-  </head>
-  <body>
+
+  
     <DashboardShell brandLabel="Workspace" brandName={workspace.name} sidebarNote={`${membership.role} · Backup detail`} navItems={navItems}>
         <header class="topbar">
           <div>
@@ -141,5 +135,5 @@ const navItems = [
       });
 
     </script>
-  </body>
-</html>
+  
+

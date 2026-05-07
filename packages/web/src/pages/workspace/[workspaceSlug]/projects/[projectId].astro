@@ -53,14 +53,8 @@ const navItems = [
 ];
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width" />
-    <title>{project.name} Database Sources</title>
-    <link rel="stylesheet" href="/src/styles/dashboard.css" />
-  </head>
-  <body>
+
+  
     <DashboardShell brandLabel="Project" brandName={project.name} sidebarNote={`${membership.role} · Database Sources`} navItems={navItems}>
         <header class="topbar">
           <div>
@@ -271,5 +265,5 @@ const navItems = [
         window.location.reload();
       });
     </script>
-  </body>
-</html>
+  
+
