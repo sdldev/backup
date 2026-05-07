@@ -1,0 +1,25 @@
+---
+import '../styles/globals.css';
+
+const { title = 'Manual Backup SaaS Beta' } = Astro.props as { title?: string };
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>{title}</title>
+    <script is:inline>
+      (() => {
+        const key = 'theme';
+        const stored = localStorage.getItem(key);
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const isDark = stored ? stored === 'dark' : prefersDark;
+        document.documentElement.classList.toggle('dark', isDark);
+      })();
+    </script>
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

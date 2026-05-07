@@ -8,6 +8,7 @@ export default defineConfig({
   adapter: node({ mode: 'standalone' }),
   integrations: [react()],
   vite: {
+    cacheDir: '../../node_modules/.vite-web',
     plugins: [tailwindcss()],
   },
   server: {
