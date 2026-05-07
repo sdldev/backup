@@ -1,5 +1,13 @@
 ---
 import DashboardShell from '../../../components/DashboardShell.astro';
+import EmptyState from '../../../components/dashboard/EmptyState.astro';
+import FormSection from '../../../components/dashboard/FormSection.astro';
+import PageHeader from '../../../components/dashboard/PageHeader.astro';
+import StatCard from '../../../components/dashboard/StatCard.astro';
+import { Button } from '../../../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
+import { Field, FieldGroup, FieldLabel } from '../../../components/ui/field';
+import { Input } from '../../../components/ui/input';
 import { buildWorkspaceNavGroups } from '../../../lib/dashboard-nav';
 import { apiFetch, API_BASE_URL } from '../../../lib/api';
 
@@ -28,118 +36,99 @@ const projectsPayload = (await projectsResponse.json()) as {
 const canCreateProject = membership.role === 'owner' || membership.role === 'admin';
 ---
 
+<DashboardShell brandLabel="Workspace" brandName={workspace.name} pageTitle="Projects" sidebarNote={`${membership.role} · Project management`} navGroups={buildWorkspaceNavGroups(workspace.slug, Astro.url.pathname)}>
+  <PageHeader eyebrow="Projects" title={workspace.name} description="Group Database Sources by client, website, or application before running manual Backups.">
+    <Button slot="actions" asChild variant="outline"><a href={`/workspace/${workspace.slug}`}>Dashboard</a></Button>
+  </PageHeader>
 
-  
-    <DashboardShell brandLabel="Workspace" brandName={workspace.name} pageTitle="Projects" sidebarNote={`${membership.role} · Project management`} navGroups={buildWorkspaceNavGroups(workspace.slug, Astro.url.pathname)}>
-      <header class="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div>
-          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Projects</p>
-          <h1>{workspace.name}</h1>
-          <p>Group Database Sources by client, website, or application before running manual Backups.</p>
-        </div>
-        <div class="flex flex-wrap gap-2">
-          <a class="inline-flex h-9 items-center justify-center rounded-md border bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50" href={`/workspace/${workspace.slug}`}>Dashboard</a>
-        </div>
-      </header>
+  <section class="grid gap-4 md:grid-cols-3" aria-label="Project summary">
+    <StatCard label="Projects" value={projectsPayload.data.length} />
+    <StatCard label="Role" value={membership.role} />
+    <StatCard label="Create Access" value={canCreateProject ? 'Allowed' : 'View only'} />
+  </section>
 
-      <section class="grid gap-4 md:grid-cols-3" aria-label="Project summary">
-        <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
-          <span class="text-sm font-medium text-muted-foreground">Projects</span>
-          <span class="block text-3xl font-semibold tracking-tight">{projectsPayload.data.length}</span>
-        </article>
-        <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
-          <span class="text-sm font-medium text-muted-foreground">Role</span>
-          <span class="block text-3xl font-semibold tracking-tight">{membership.role}</span>
-        </article>
-        <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
-          <span class="text-sm font-medium text-muted-foreground">Create Access</span>
-          <span class="block text-3xl font-semibold tracking-tight">{canCreateProject ? 'Allowed' : 'View only'}</span>
-        </article>
-      </section>
+  <section class="mt-6 grid gap-4 lg:grid-cols-2">
+    {
+      canCreateProject ? (
+        <FormSection title="Create Project" description="Create a Project before adding Database Sources.">
+          <form id="project-form" class="flex flex-col gap-4">
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="project-name">Project name</FieldLabel>
+                <Input id="project-name" name="name" required maxLength={120} placeholder="Client website or app name" />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="project-website-url">Website URL optional</FieldLabel>
+                <Input id="project-website-url" name="website_url" maxLength={300} inputMode="url" placeholder="https://example.com" />
+              </Field>
+            </FieldGroup>
+            <Button type="submit">Create Project</Button>
+          </form>
+          <p id="form-message" class="mt-4 text-sm text-muted-foreground" role="status"></p>
+        </FormSection>
+      ) : (
+        <FormSection title="View-only access" description="Workspace Members can view Projects but cannot create them." />
+      )
+    }
 
-      <section class="mt-6 grid gap-4 lg:grid-cols-2">
+    <Card>
+      <CardHeader>
+        <CardTitle>Project list</CardTitle>
+      </CardHeader>
+      <CardContent>
         {
-          canCreateProject ? (
-            <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
-              <h2>Create Project</h2>
-              <form id="project-form" class="grid gap-4">
-                <label>
-                  Project name
-                  <input name="name" required maxlength="120" placeholder="Client website or app name" />
-                </label>
-                <label>
-                  Website URL optional
-                  <input name="website_url" maxlength="300" inputmode="url" placeholder="https://example.com" />
-                </label>
-                <button class="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50" type="submit">Create Project</button>
-              </form>
-              <p id="form-message" role="status"></p>
-            </article>
+          projectsPayload.data.length === 0 ? (
+            <EmptyState title="No Project yet" description="Create Project before adding Database Sources." />
           ) : (
-            <article class="rounded-xl border bg-muted/30 p-5 text-card-foreground shadow-sm">
-              <h2>View-only access</h2>
-              <p>Workspace Members can view Projects but cannot create them.</p>
-            </article>
+            <ul class="grid gap-3">
+              {projectsPayload.data.map((project) => (
+                <li class="flex items-center justify-between gap-4 rounded-lg border p-3">
+                  <div class="min-w-0">
+                    <a class="font-medium hover:underline" href={`/workspace/${workspace.slug}/projects/${project.id}`}>
+                      {project.name}
+                    </a>
+                    {project.website_url ? <p class="truncate text-sm text-muted-foreground">{project.website_url}</p> : <p class="text-sm text-muted-foreground">No website URL</p>}
+                  </div>
+                  <Button asChild variant="outline"><a href={`/workspace/${workspace.slug}/projects/${project.id}`}>Open</a></Button>
+                </li>
+              ))}
+            </ul>
           )
         }
+      </CardContent>
+    </Card>
+  </section>
+</DashboardShell>
 
-        <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
-          <h2>Project list</h2>
-          {
-            projectsPayload.data.length === 0 ? (
-              <div class="empty">
-                <h2>No Project yet</h2>
-                <p>Create Project before adding Database Sources.</p>
-              </div>
-            ) : (
-              <ul class="grid gap-3">
-                {projectsPayload.data.map((project) => (
-                  <li class="flex items-center justify-between gap-4 rounded-lg border p-3">
-                    <div>
-                      <a href={`/workspace/${workspace.slug}/projects/${project.id}`}>
-                        <strong>{project.name}</strong>
-                      </a>
-                      {project.website_url ? <p>{project.website_url}</p> : <p>No website URL</p>}
-                    </div>
-                    <a class="inline-flex h-9 items-center justify-center rounded-md border bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50" href={`/workspace/${workspace.slug}/projects/${project.id}`}>Open</a>
-                  </li>
-                ))}
-              </ul>
-            )
-          }
-        </article>
-      </section>
-    </DashboardShell>
+<script is:inline define:vars={{ apiBaseUrl: API_BASE_URL, workspaceId: workspace.id }}>
+  const form = document.getElementById('project-form');
+  const message = document.getElementById('form-message');
 
-    <script is:inline define:vars={{ apiBaseUrl: API_BASE_URL, workspaceId: workspace.id }}>
-      const form = document.getElementById('project-form');
-      const message = document.getElementById('form-message');
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    message.textContent = 'Creating Project...';
+    message.classList.remove('text-destructive');
 
-      form?.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        message.textContent = 'Creating Project...';
+    const formData = new FormData(form);
+    const body = {
+      name: String(formData.get('name') ?? ''),
+      website_url: String(formData.get('website_url') ?? '') || undefined,
+    };
 
-        const formData = new FormData(form);
-        const body = {
-          name: String(formData.get('name') ?? ''),
-          website_url: String(formData.get('website_url') ?? '') || undefined,
-        };
+    const response = await fetch(`${apiBaseUrl}/v1/workspaces/${workspaceId}/projects`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
 
-        const response = await fetch(`${apiBaseUrl}/v1/workspaces/${workspaceId}/projects`, {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify(body),
-        });
+    const payload = await response.json();
+    if (!response.ok) {
+      message.textContent = payload.error?.message ?? 'Project could not be created';
+      message.classList.add('text-destructive');
+      return;
+    }
 
-        const payload = await response.json();
-        if (!response.ok) {
-          message.textContent = payload.error?.message ?? 'Project could not be created';
-          return;
-        }
-
-        window.location.reload();
-      });
-    </script>
-  
-
+    window.location.reload();
+  });
+</script>
