@@ -1,5 +1,11 @@
 ---
 import DashboardShell from '../components/DashboardShell.astro';
+import EmptyState from '../components/dashboard/EmptyState.astro';
+import PageHeader from '../components/dashboard/PageHeader.astro';
+import StatCard from '../components/dashboard/StatCard.astro';
+import StatusBadge from '../components/dashboard/StatusBadge.astro';
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { apiFetch } from '../lib/api';
 
 const response = await apiFetch('/v1/workspaces', Astro.request);
@@ -29,77 +35,55 @@ const payload = (await response.json()) as {
 const readyStorageCount = payload.data.filter((item) => item.workspace.storage_status === 'ready').length;
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width" />
-    <title>Workspaces</title>
-    <link rel="stylesheet" href="/src/styles/dashboard.css" />
-  </head>
-  <body>
-    <DashboardShell
-      brandLabel="Manual Backup"
-      brandName="Portal"
-      sidebarNote="Encrypted manual Backups for Projects and Database Sources."
-      navItems={[{ href: '/app', label: 'Workspaces', active: true }, { href: '/app/new-workspace', label: 'New Workspace' }]}
-    >
-      <header class="topbar">
-        <div>
-          <p class="eyebrow">Workspace launcher</p>
-          <h1>Your Workspaces</h1>
-          <p>Choose tenant to manage Projects, Database Sources, Backups, and Audit Log.</p>
-        </div>
-        <div class="actions">
-          <a class="button button--primary" href="/app/new-workspace">Create Workspace</a>
-        </div>
-      </header>
+<DashboardShell
+  brandLabel="Manual Backup"
+  brandName="Portal"
+  sidebarNote="Encrypted manual Backups for Projects and Database Sources."
+  navItems={[{ href: '/app', label: 'Workspaces', active: true }, { href: '/app/new-workspace', label: 'New Workspace' }]}
+>
+  <PageHeader eyebrow="Workspace launcher" title="Your Workspaces" description="Choose tenant to manage Projects, Database Sources, Backups, and Audit Log.">
+    <Button slot="actions" asChild>
+      <a href="/app/new-workspace">Create Workspace</a>
+    </Button>
+  </PageHeader>
 
-      <section class="grid grid--stats" aria-label="Workspace summary">
-        <article class="card stat">
-          <span class="stat__label">Total Workspaces</span>
-          <span class="stat__value">{payload.data.length}</span>
-        </article>
-        <article class="card stat">
-          <span class="stat__label">Storage Ready</span>
-          <span class="stat__value">{readyStorageCount}</span>
-        </article>
-        <article class="card stat">
-          <span class="stat__label">Active Scope</span>
-          <span class="stat__value">Manual</span>
-        </article>
-      </section>
+  <section class="grid gap-4 md:grid-cols-3" aria-label="Workspace summary">
+    <StatCard label="Total Workspaces" value={payload.data.length} />
+    <StatCard label="Storage Ready" value={readyStorageCount} />
+    <StatCard label="Active Scope" value="Manual" />
+  </section>
 
-      <section class="card" style="margin-top: 18px;">
-        <h2>Workspace list</h2>
-        {
-          payload.data.length === 0 ? (
-            <div class="empty">
-              <h2>No Workspace yet</h2>
-              <p>Create your first Workspace to configure Projects, Database Sources, and manual Backups.</p>
-              <a class="button button--primary" href="/app/new-workspace">Create first Workspace</a>
-            </div>
-          ) : (
-            <ul class="list">
-              {payload.data.map((item) => (
-                <li class="list-item">
-                  <div>
-                    <a href={`/workspace/${item.workspace.slug}`}>
-                      <strong>{item.workspace.name}</strong>
-                    </a>
-                    <p>{item.membership.role} · {item.plan.name} · onboarding {item.workspace.onboarding_step}</p>
-                  </div>
-                  <div class="actions">
-                    <span class={`badge ${item.workspace.storage_status === 'ready' ? 'badge--ok' : 'badge--warn'}`}>
-                      Storage {item.workspace.storage_status}
-                    </span>
-                    <a class="button" href={`/workspace/${item.workspace.slug}`}>Open</a>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )
-        }
-      </section>
-    </DashboardShell>
-  </body>
-</html>
+  <Card className="mt-6">
+    <CardHeader>
+      <CardTitle>Workspace list</CardTitle>
+    </CardHeader>
+    <CardContent>
+      {
+        payload.data.length === 0 ? (
+          <EmptyState title="No Workspace yet" description="Create your first Workspace to configure Projects, Database Sources, and manual Backups.">
+            <Button slot="action" asChild>
+              <a href="/app/new-workspace">Create first Workspace</a>
+            </Button>
+          </EmptyState>
+        ) : (
+          <div class="grid gap-3">
+            {payload.data.map((item) => (
+              <article class="flex flex-col gap-3 rounded-lg border p-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <a class="font-semibold hover:underline" href={`/workspace/${item.workspace.slug}`}>{item.workspace.name}</a>
+                  <p class="mt-1 text-sm text-muted-foreground">{item.membership.role} · {item.plan.name} · onboarding {item.workspace.onboarding_step}</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                  <StatusBadge status={item.workspace.storage_status} label={`Storage ${item.workspace.storage_status}`} />
+                  <Button asChild variant="outline" size="sm">
+                    <a href={`/workspace/${item.workspace.slug}`}>Open</a>
+                  </Button>
+                </div>
+              </article>
+            ))}
+          </div>
+        )
+      }
+    </CardContent>
+  </Card>
+</DashboardShell>
