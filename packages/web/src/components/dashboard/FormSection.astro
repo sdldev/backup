@@ -1,11 +1,15 @@
 ---
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+
 const { title, description } = Astro.props as { title: string; description?: string };
 ---
 
-<section class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
-  <div class="mb-5 space-y-1">
-    <h2 class="text-lg font-semibold tracking-tight">{title}</h2>
-    {description ? <p class="text-sm leading-6 text-muted-foreground">{description}</p> : null}
-  </div>
-  <slot />
-</section>
+<Card>
+  <CardHeader>
+    <CardTitle>{title}</CardTitle>
+    {description ? <CardDescription>{description}</CardDescription> : null}
+  </CardHeader>
+  <CardContent>
+    <slot />
+  </CardContent>
+</Card>

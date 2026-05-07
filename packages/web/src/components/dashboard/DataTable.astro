@@ -2,14 +2,15 @@
 const { caption } = Astro.props as { caption?: string };
 ---
 
+<!-- Astro slot adapter for shadcn Table. Keep native table markup so callers can pass named head/body slots. Classes mirror components/ui/table.tsx. -->
 <div class="overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm">
   <div class="overflow-x-auto">
     <table class="w-full caption-bottom text-sm">
       {caption ? <caption class="mt-4 text-sm text-muted-foreground">{caption}</caption> : null}
-      <thead class="border-b bg-muted/40">
+      <thead class="border-b bg-muted/40 [&_tr]:border-b">
         <slot name="head" />
       </thead>
-      <tbody class="divide-y">
+      <tbody class="[&_tr:last-child]:border-0">
         <slot />
       </tbody>
     </table>

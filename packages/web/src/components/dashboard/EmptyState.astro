@@ -1,11 +1,15 @@
 ---
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from '../ui/empty';
+
 const { title, description } = Astro.props as { title: string; description?: string };
 ---
 
-<div class="rounded-xl border border-dashed bg-muted/30 p-8 text-center">
-  <h2 class="text-xl font-semibold tracking-tight">{title}</h2>
-  {description ? <p class="mx-auto mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{description}</p> : null}
-  <div class="mt-4 flex justify-center">
+<Empty className="border bg-muted/30">
+  <EmptyHeader>
+    <EmptyTitle>{title}</EmptyTitle>
+    {description ? <EmptyDescription>{description}</EmptyDescription> : null}
+  </EmptyHeader>
+  <EmptyContent>
     <slot name="action" />
-  </div>
-</div>
+  </EmptyContent>
+</Empty>
