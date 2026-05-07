@@ -1,5 +1,15 @@
 ---
 import DashboardShell from '../../../../components/DashboardShell.astro';
+import EmptyState from '../../../../components/dashboard/EmptyState.astro';
+import FormSection from '../../../../components/dashboard/FormSection.astro';
+import PageHeader from '../../../../components/dashboard/PageHeader.astro';
+import StatCard from '../../../../components/dashboard/StatCard.astro';
+import { Badge } from '../../../../components/ui/badge';
+import { Button } from '../../../../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../../components/ui/card';
+import { Field, FieldGroup, FieldLabel } from '../../../../components/ui/field';
+import { Input } from '../../../../components/ui/input';
+import { Select } from '../../../../components/ui/select';
 import { buildWorkspaceNavGroups } from '../../../../lib/dashboard-nav';
 import { apiFetch } from '../../../../lib/api';
 
@@ -86,95 +96,113 @@ const canManageMembers = membership.role === 'owner' || membership.role === 'adm
 const canTransferOwnership = membership.role === 'owner';
 ---
 
+<DashboardShell brandLabel="Workspace" brandName={workspace.name} pageTitle="Members" sidebarNote={`${membership.role} · Team access`} navGroups={buildWorkspaceNavGroups(workspace.slug, Astro.url.pathname)}>
+  <PageHeader eyebrow="Workspace settings" title="Members" description="Manage who can configure Database Sources, run Backups, and review sensitive Workspace activity.">
+    <Button slot="actions" asChild variant="outline"><a href={`/workspace/${workspace.slug}/settings/audit-log`}>Audit Log</a></Button>
+  </PageHeader>
 
-  
-    <DashboardShell brandLabel="Workspace" brandName={workspace.name} pageTitle="Members" sidebarNote={`${membership.role} · Team access`} navGroups={buildWorkspaceNavGroups(workspace.slug, Astro.url.pathname)}>
-      <header class="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div>
-          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Workspace settings</p>
-          <h1>Members</h1>
-          <p>Manage who can configure Database Sources, run Backups, and review sensitive Workspace activity.</p>
-        </div>
-        <div class="flex flex-wrap gap-2">
-          <a class="inline-flex h-9 items-center justify-center rounded-md border bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50" href={`/workspace/${workspace.slug}/settings/audit-log`}>Audit Log</a>
-        </div>
-      </header>
+  {formMessage ? (
+    <Card className="mb-6">
+      <CardContent className="pt-6">
+        <strong>{formMessage}</strong>
+        {inviteLink ? <p class="mt-2 break-all text-sm text-muted-foreground"><code>{new URL(inviteLink, Astro.url.origin).toString()}</code></p> : null}
+      </CardContent>
+    </Card>
+  ) : null}
 
-      {formMessage ? <div class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm"><strong>{formMessage}</strong>{inviteLink ? <p><code>{new URL(inviteLink, Astro.url.origin).toString()}</code></p> : null}</div> : null}
+  <section class="grid gap-4 md:grid-cols-3" aria-label="Members summary">
+    <StatCard label="Members" value={membersPayload.data.length} />
+    <StatCard label="Owners" value={ownerCount} />
+    <StatCard label="Admins" value={adminCount} />
+  </section>
 
-      <section class="grid gap-4 md:grid-cols-3" aria-label="Members summary">
-        <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm"><span class="text-sm font-medium text-muted-foreground">Members</span><span class="block text-3xl font-semibold tracking-tight">{membersPayload.data.length}</span></article>
-        <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm"><span class="text-sm font-medium text-muted-foreground">Owners</span><span class="block text-3xl font-semibold tracking-tight">{ownerCount}</span></article>
-        <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm"><span class="text-sm font-medium text-muted-foreground">Admins</span><span class="block text-3xl font-semibold tracking-tight">{adminCount}</span></article>
-      </section>
-
-      {canManageMembers ? (
-        <section class="mt-6 rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
-          <div class="section-heading"><div><p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Invite teammate</p><h2>Create invite</h2></div><span class="inline-flex rounded-md border bg-secondary px-2.5 py-0.5 text-xs font-semibold text-secondary-foreground">Token shown once</span></div>
-          <form method="post" class="stack-form">
-            <input type="hidden" name="action" value="create-invite" />
-            <label>Email <input name="email" type="email" required placeholder="teammate@example.com" /></label>
-            <label>Role
-              <select name="role">
+  {canManageMembers ? (
+    <div class="mt-6">
+      <FormSection title="Create invite" description="Invite token is shown once after creation.">
+        <form method="post" class="flex flex-col gap-4">
+          <input type="hidden" name="action" value="create-invite" />
+          <FieldGroup>
+            <Field>
+              <FieldLabel htmlFor="invite-email">Email</FieldLabel>
+              <Input id="invite-email" name="email" type="email" required placeholder="teammate@example.com" />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="invite-role">Role</FieldLabel>
+              <Select id="invite-role" name="role" defaultValue="member">
                 <option value="member">Member</option>
                 {membership.role === 'owner' ? <option value="admin">Admin</option> : null}
-              </select>
-            </label>
-            <button class="inline-flex h-9 items-center justify-center rounded-md border bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50" type="submit">Create invite</button>
-          </form>
-        </section>
-      ) : null}
+              </Select>
+            </Field>
+          </FieldGroup>
+          <Button type="submit" variant="outline">Create invite</Button>
+        </form>
+      </FormSection>
+    </div>
+  ) : null}
 
-      <section class="mt-6 rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
-        <div class="section-heading"><div><p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Team access</p><h2>Workspace members</h2></div>{canManageMembers ? <span class="inline-flex rounded-md border bg-secondary px-2.5 py-0.5 text-xs font-semibold text-secondary-foreground">Manage</span> : <span class="inline-flex rounded-md border bg-secondary px-2.5 py-0.5 text-xs font-semibold text-secondary-foreground">View only</span>}</div>
-        {membersPayload.data.length === 0 ? (
-          <div class="empty"><h2>No members yet</h2><p>Workspace members will appear here after invites are accepted.</p></div>
-        ) : (
-          <ol class="grid gap-3">
-            {membersPayload.data.map((member) => (
-              <li class="flex items-center justify-between gap-4 rounded-lg border p-3">
-                <div>
-                  <strong>{member.user?.name ?? member.user?.email ?? member.user_id}</strong>
-                  <p>{member.user?.email ?? member.user_id} · joined {member.joined_at}</p>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                  <span class="inline-flex rounded-md border bg-secondary px-2.5 py-0.5 text-xs font-semibold text-secondary-foreground">{member.role}</span>
-                  {membership.role === 'owner' && member.role !== 'owner' ? (
-                    <form method="post" class="inline-form">
-                      <input type="hidden" name="action" value="change-role" />
-                      <input type="hidden" name="member_user_id" value={member.user_id} />
-                      <select name="role"><option value="member" selected={member.role === 'member'}>Member</option><option value="admin" selected={member.role === 'admin'}>Admin</option></select>
-                      <button class="inline-flex h-9 items-center justify-center rounded-md border bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50" type="submit">Update</button>
-                    </form>
-                  ) : null}
-                  {canManageMembers && member.role !== 'owner' ? (
-                    <form method="post" class="inline-form">
-                      <input type="hidden" name="action" value="remove-member" />
-                      <input type="hidden" name="member_user_id" value={member.user_id} />
-                      <button class="inline-flex h-9 items-center justify-center rounded-md border bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50" type="submit">Remove</button>
-                    </form>
-                  ) : null}
-                </div>
-              </li>
-            ))}
-          </ol>
-        )}
-      </section>
+  <Card className="mt-6">
+    <CardHeader className="flex flex-row items-start justify-between gap-4">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Team access</p>
+        <CardTitle className="mt-1">Workspace members</CardTitle>
+      </div>
+      <Badge variant="secondary">{canManageMembers ? 'Manage' : 'View only'}</Badge>
+    </CardHeader>
+    <CardContent>
+      {membersPayload.data.length === 0 ? (
+        <EmptyState title="No members yet" description="Workspace members will appear here after invites are accepted." />
+      ) : (
+        <ol class="grid gap-3">
+          {membersPayload.data.map((member) => (
+            <li class="flex flex-col justify-between gap-4 rounded-lg border p-3 lg:flex-row lg:items-center">
+              <div class="min-w-0">
+                <strong>{member.user?.name ?? member.user?.email ?? member.user_id}</strong>
+                <p class="break-all text-sm text-muted-foreground">{member.user?.email ?? member.user_id} · joined {member.joined_at}</p>
+              </div>
+              <div class="flex flex-wrap items-center gap-2">
+                <Badge variant="secondary">{member.role}</Badge>
+                {membership.role === 'owner' && member.role !== 'owner' ? (
+                  <form method="post" class="flex flex-wrap items-center gap-2">
+                    <input type="hidden" name="action" value="change-role" />
+                    <input type="hidden" name="member_user_id" value={member.user_id} />
+                    <Select name="role" defaultValue={member.role} className="w-32">
+                      <option value="member">Member</option>
+                      <option value="admin">Admin</option>
+                    </Select>
+                    <Button type="submit" variant="outline">Update</Button>
+                  </form>
+                ) : null}
+                {canManageMembers && member.role !== 'owner' ? (
+                  <form method="post">
+                    <input type="hidden" name="action" value="remove-member" />
+                    <input type="hidden" name="member_user_id" value={member.user_id} />
+                    <Button type="submit" variant="destructive">Remove</Button>
+                  </form>
+                ) : null}
+              </div>
+            </li>
+          ))}
+        </ol>
+      )}
+    </CardContent>
+  </Card>
 
-      {canTransferOwnership ? (
-        <section class="mt-6 rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
-          <div class="section-heading"><div><p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Ownership</p><h2>Transfer ownership</h2></div><span class="inline-flex rounded-md border bg-secondary px-2.5 py-0.5 text-xs font-semibold text-secondary-foreground">Admin target only</span></div>
-          <form method="post" class="stack-form">
-            <input type="hidden" name="action" value="transfer-ownership" />
-            <label>New Owner
-              <select name="new_owner_user_id" required>
+  {canTransferOwnership ? (
+    <div class="mt-6">
+      <FormSection title="Transfer ownership" description="Only admins can become the new Workspace Owner.">
+        <form method="post" class="flex flex-col gap-4">
+          <input type="hidden" name="action" value="transfer-ownership" />
+          <FieldGroup>
+            <Field>
+              <FieldLabel htmlFor="new-owner-user-id">New Owner</FieldLabel>
+              <Select id="new-owner-user-id" name="new_owner_user_id" required>
                 {membersPayload.data.filter((member) => member.role === 'admin').map((member) => <option value={member.user_id}>{member.user?.email ?? member.user_id}</option>)}
-              </select>
-            </label>
-            <button class="inline-flex h-9 items-center justify-center rounded-md border bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50" type="submit">Transfer ownership</button>
-          </form>
-        </section>
-      ) : null}
-    </DashboardShell>
-  
-
+              </Select>
+            </Field>
+          </FieldGroup>
+          <Button type="submit" variant="outline">Transfer ownership</Button>
+        </form>
+      </FormSection>
+    </div>
+  ) : null}
+</DashboardShell>
