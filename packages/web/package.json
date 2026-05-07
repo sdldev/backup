@@ -11,8 +11,19 @@
   },
   "dependencies": {
     "@astrojs/check": "latest",
+    "@astrojs/node": "latest",
+    "@astrojs/react": "latest",
     "astro": "latest",
+    "class-variance-authority": "latest",
+    "clsx": "latest",
+    "lucide-react": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "tailwind-merge": "latest",
     "typescript": "latest"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@tailwindcss/vite": "latest",
+    "tailwindcss": "latest"
+  }
 }

@@ -21,9 +21,11 @@ Create/modify:
 - `packages/web/src/lib/utils.ts`
 
 Implementation:
-- Add dependencies: `@astrojs/react`, `@astrojs/tailwind`, `react`, `react-dom`, `tailwindcss`, `postcss`, `autoprefixer`, `class-variance-authority`, `clsx`, `tailwind-merge`, `lucide-react`.
-- Configure Astro integrations: `react()` and `tailwind({ applyBaseStyles: false })`.
-- Add shadcn-compatible Tailwind tokens using CSS variables in `globals.css`.
+- Add dependencies: `@astrojs/react`, `@astrojs/node`, `@tailwindcss/vite`, `react`, `react-dom`, `tailwindcss@latest`, `class-variance-authority`, `clsx`, `tailwind-merge`, `lucide-react`.
+- Configure Astro integrations: `react()`.
+- Configure Tailwind CSS v4.2.4 through the Vite plugin: `vite.plugins: [tailwindcss()]`.
+- Configure Astro server output with the Node adapter: `adapter: node({ mode: 'standalone' })` so `astro build` works.
+- Add shadcn-compatible Tailwind v4 tokens using CSS variables in `globals.css`.
 - Add `cn(...inputs)` helper using `clsx` + `tailwind-merge`.
 - Keep `dashboard.css` in place for compatibility during migration.
 
@@ -37,7 +39,7 @@ Expected: both commands pass.
 
 Commit:
 ```bash
-git add packages/web/package.json packages/web/astro.config.mjs packages/web/tailwind.config.ts packages/web/postcss.config.mjs packages/web/components.json packages/web/src/styles/globals.css packages/web/src/lib/utils.ts bun.lock
+git add packages/web/package.json packages/web/astro.config.mjs packages/web/tailwind.config.ts packages/web/postcss.config.mjs packages/web/components.json packages/web/src/styles/globals.css packages/web/src/lib/utils.ts bun.lock docs/plans/2026-05-08-shadcn-ui-implementation.md
 git commit -m "feat(web): add shadcn foundation"
 ```
 
