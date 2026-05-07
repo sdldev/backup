@@ -12,6 +12,7 @@ Note: repo path was not a git repository during planning, so commit steps are wr
 <!-- checkpoint: done -->
 
 Create/modify:
+
 - `packages/web/package.json`
 - `packages/web/astro.config.mjs`
 - `packages/web/tailwind.config.ts`
@@ -21,6 +22,7 @@ Create/modify:
 - `packages/web/src/lib/utils.ts`
 
 Implementation:
+
 - Add dependencies: `@astrojs/react`, `@astrojs/node`, `@tailwindcss/vite`, `react`, `react-dom`, `tailwindcss@latest`, `class-variance-authority`, `clsx`, `tailwind-merge`, `lucide-react`.
 - Configure Astro integrations: `react()`.
 - Configure Tailwind CSS v4.2.4 through the Vite plugin: `vite.plugins: [tailwindcss()]`.
@@ -30,14 +32,17 @@ Implementation:
 - Keep `dashboard.css` in place for compatibility during migration.
 
 Verify:
+
 ```bash
 bun install
 bun --filter @backup-saas/web typecheck
 bun --filter @backup-saas/web build
 ```
+
 Expected: both commands pass.
 
 Commit:
+
 ```bash
 git add packages/web/package.json packages/web/astro.config.mjs packages/web/tailwind.config.ts packages/web/postcss.config.mjs packages/web/components.json packages/web/src/styles/globals.css packages/web/src/lib/utils.ts bun.lock docs/plans/2026-05-08-shadcn-ui-implementation.md
 git commit -m "feat(web): add shadcn foundation"
@@ -49,6 +54,7 @@ git commit -m "feat(web): add shadcn foundation"
 <!-- checkpoint: done -->
 
 Create/modify:
+
 - `packages/web/src/components/ui/button.tsx`
 - `packages/web/src/components/ui/card.tsx`
 - `packages/web/src/components/ui/badge.tsx`
@@ -61,6 +67,7 @@ Create/modify:
 - `packages/web/src/layouts/BaseLayout.astro`
 
 Implementation:
+
 - Add shadcn-style components copied/adapted locally, no external generated code required at runtime.
 - Add `BaseLayout.astro` importing `../styles/globals.css`.
 - Add inline theme boot script before body paint:
@@ -70,13 +77,16 @@ Implementation:
 - Add `ThemeToggle` React island using localStorage and `class="dark"`.
 
 Verify:
+
 ```bash
 bun --filter @backup-saas/web typecheck
 bun --filter @backup-saas/web build
 ```
+
 Expected: layout compiles; theme component hydrates without SSR error.
 
 Commit:
+
 ```bash
 git add packages/web/src/components/ui packages/web/src/components/theme packages/web/src/layouts/BaseLayout.astro
 git commit -m "feat(web): add shadcn primitives and theme toggle"
@@ -88,11 +98,13 @@ git commit -m "feat(web): add shadcn primitives and theme toggle"
 <!-- checkpoint: none -->
 
 Modify:
+
 - `packages/web/src/pages/index.astro`
 - `packages/web/src/pages/login.astro`
 - `packages/web/src/pages/invite/[token].astro`
 
 Implementation:
+
 - Replace direct `<html>`, `<head>`, `<body>` shell with `BaseLayout`.
 - Replace `.button`, `.card`, `.auth-card`, `.hero-card`, `.marketing-*` usage with Tailwind + shadcn `Button`, `Card`, `Badge` where useful.
 - Keep copy/domain terms exact: Workspace, Project, Database Source, Backup Job, Audit Log.
@@ -100,13 +112,16 @@ Implementation:
 - Do not change API calls or redirects.
 
 Verify:
+
 ```bash
 bun --filter @backup-saas/web typecheck
 bun --filter @backup-saas/web build
 ```
+
 Expected: pages render and routes unchanged: `/`, `/login`, `/invite/[token]`.
 
 Commit:
+
 ```bash
 git add packages/web/src/pages/index.astro packages/web/src/pages/login.astro packages/web/src/pages/invite/[token].astro
 git commit -m "feat(web): migrate public pages to shadcn"
@@ -118,11 +133,13 @@ git commit -m "feat(web): migrate public pages to shadcn"
 <!-- checkpoint: done -->
 
 Modify/create:
+
 - `packages/web/src/components/DashboardShell.astro`
 - `packages/web/src/components/dashboard/AppSidebar.astro`
 - `packages/web/src/components/dashboard/DashboardHeader.astro`
 
 Implementation:
+
 - Keep existing `DashboardShell` props: `brandLabel`, `brandName`, `navItems`, `sidebarNote`.
 - Move sidebar markup into `AppSidebar.astro`.
 - Add modern admin shell layout:
@@ -135,13 +152,16 @@ Implementation:
 - Replace `dashboard.css` dependency for shell with Tailwind classes.
 
 Verify:
+
 ```bash
 bun --filter @backup-saas/web typecheck
 bun --filter @backup-saas/web build
 ```
+
 Expected: all dashboard pages compile without changing page imports.
 
 Commit:
+
 ```bash
 git add packages/web/src/components/DashboardShell.astro packages/web/src/components/dashboard
 git commit -m "feat(web): modernize dashboard shell"
@@ -153,6 +173,7 @@ git commit -m "feat(web): modernize dashboard shell"
 <!-- checkpoint: none -->
 
 Create:
+
 - `packages/web/src/components/dashboard/PageHeader.astro`
 - `packages/web/src/components/dashboard/StatCard.astro`
 - `packages/web/src/components/dashboard/ActionGroup.astro`
@@ -161,6 +182,7 @@ Create:
 - `packages/web/src/components/dashboard/StatusBadge.astro`
 
 Implementation:
+
 - `PageHeader`: eyebrow, title, description, action slot.
 - `StatCard`: label, value, optional badge slot.
 - `ActionGroup`: flex wrapper for buttons/links.
@@ -173,13 +195,16 @@ Implementation:
 - Use shadcn classes/tokens only.
 
 Verify:
+
 ```bash
 bun --filter @backup-saas/web typecheck
 bun --filter @backup-saas/web build
 ```
+
 Expected: new components compile.
 
 Commit:
+
 ```bash
 git add packages/web/src/components/dashboard/PageHeader.astro packages/web/src/components/dashboard/StatCard.astro packages/web/src/components/dashboard/ActionGroup.astro packages/web/src/components/dashboard/EmptyState.astro packages/web/src/components/dashboard/FormSection.astro packages/web/src/components/dashboard/StatusBadge.astro
 git commit -m "feat(web): add dashboard UI building blocks"
@@ -191,10 +216,12 @@ git commit -m "feat(web): add dashboard UI building blocks"
 <!-- checkpoint: none -->
 
 Modify:
+
 - `packages/web/src/pages/app.astro`
 - `packages/web/src/pages/app/new-workspace.astro`
 
 Implementation:
+
 - Use `BaseLayout` + `DashboardShell` as appropriate.
 - Replace old `.topbar`, `.grid`, `.card`, `.button`, `.form-grid` with new dashboard components and shadcn primitives.
 - Keep create Workspace form fields, IDs, names, and submit behavior unchanged.
@@ -202,13 +229,16 @@ Implementation:
 - Add dense modern layout; avoid decorative gradients/glows.
 
 Verify:
+
 ```bash
 bun --filter @backup-saas/web typecheck
 bun --filter @backup-saas/web build
 ```
+
 Expected: `/app` and `/app/new-workspace` compile; form selectors still match scripts.
 
 Commit:
+
 ```bash
 git add packages/web/src/pages/app.astro packages/web/src/pages/app/new-workspace.astro
 git commit -m "feat(web): migrate workspace entry flows"
@@ -220,10 +250,12 @@ git commit -m "feat(web): migrate workspace entry flows"
 <!-- checkpoint: none -->
 
 Modify:
+
 - `packages/web/src/pages/workspace/[workspaceSlug]/index.astro`
 - `packages/web/src/pages/workspace/[workspaceSlug]/onboarding.astro`
 
 Implementation:
+
 - Use `PageHeader`, `StatCard`, `StatusBadge`, `ActionGroup`, `Card`.
 - Keep nav item hrefs unchanged.
 - Preserve storage provisioning retry script selector `#retry-storage`.
@@ -231,13 +263,16 @@ Implementation:
 - Keep all API fetch/redirect/error logic unchanged.
 
 Verify:
+
 ```bash
 bun --filter @backup-saas/web typecheck
 bun --filter @backup-saas/web build
 ```
+
 Expected: workspace dashboard and onboarding compile; retry button remains addressable.
 
 Commit:
+
 ```bash
 git add packages/web/src/pages/workspace/[workspaceSlug]/index.astro packages/web/src/pages/workspace/[workspaceSlug]/onboarding.astro
 git commit -m "feat(web): migrate workspace overview UI"
@@ -249,11 +284,13 @@ git commit -m "feat(web): migrate workspace overview UI"
 <!-- checkpoint: done -->
 
 Create/modify:
+
 - `packages/web/src/components/dashboard/DataTable.astro`
 - `packages/web/src/pages/workspace/[workspaceSlug]/projects.astro`
 - `packages/web/src/pages/workspace/[workspaceSlug]/projects/[projectId].astro`
 
 Implementation:
+
 - `DataTable.astro` wraps shadcn `Table` markup with slots:
   - `caption?`
   - `head`
@@ -268,13 +305,16 @@ Implementation:
 - Keep API logic unchanged.
 
 Verify:
+
 ```bash
 bun --filter @backup-saas/web typecheck
 bun --filter @backup-saas/web build
 ```
+
 Expected: Projects pages compile; scripts still find same IDs.
 
 Commit:
+
 ```bash
 git add packages/web/src/components/dashboard/DataTable.astro packages/web/src/pages/workspace/[workspaceSlug]/projects.astro packages/web/src/pages/workspace/[workspaceSlug]/projects/[projectId].astro
 git commit -m "feat(web): migrate projects to shadcn tables"
@@ -286,11 +326,13 @@ git commit -m "feat(web): migrate projects to shadcn tables"
 <!-- checkpoint: none -->
 
 Modify:
+
 - `packages/web/src/pages/workspace/[workspaceSlug]/backups.astro`
 - `packages/web/src/pages/workspace/[workspaceSlug]/backups/[backupId].astro`
 - `packages/web/src/pages/workspace/[workspaceSlug]/backup-jobs/[jobId].astro`
 
 Implementation:
+
 - Replace summary cards with `StatCard`.
 - Replace backup list with `DataTable`.
 - Use `StatusBadge` for Backup and Backup Job statuses/stages.
@@ -302,13 +344,16 @@ Implementation:
 - Keep destructive action visual distinct but do not alter API calls.
 
 Verify:
+
 ```bash
 bun --filter @backup-saas/web typecheck
 bun --filter @backup-saas/web build
 ```
+
 Expected: Backup pages compile; action selectors unchanged.
 
 Commit:
+
 ```bash
 git add packages/web/src/pages/workspace/[workspaceSlug]/backups.astro packages/web/src/pages/workspace/[workspaceSlug]/backups/[backupId].astro packages/web/src/pages/workspace/[workspaceSlug]/backup-jobs/[jobId].astro
 git commit -m "feat(web): migrate backup operations UI"
@@ -320,10 +365,12 @@ git commit -m "feat(web): migrate backup operations UI"
 <!-- checkpoint: none -->
 
 Modify:
+
 - `packages/web/src/pages/workspace/[workspaceSlug]/settings/members.astro`
 - `packages/web/src/pages/workspace/[workspaceSlug]/settings/audit-log.astro`
 
 Implementation:
+
 - Use `PageHeader`, `StatCard`, `DataTable`, `Card`, `Badge`.
 - Preserve invite form field names and submit behavior.
 - Preserve generated invite link display.
@@ -331,13 +378,16 @@ Implementation:
 - Keep role/status badges consistent with `StatusBadge` where possible.
 
 Verify:
+
 ```bash
 bun --filter @backup-saas/web typecheck
 bun --filter @backup-saas/web build
 ```
+
 Expected: settings pages compile; invite form behavior unchanged.
 
 Commit:
+
 ```bash
 git add packages/web/src/pages/workspace/[workspaceSlug]/settings/members.astro packages/web/src/pages/workspace/[workspaceSlug]/settings/audit-log.astro
 git commit -m "feat(web): migrate admin settings views"
@@ -349,11 +399,13 @@ git commit -m "feat(web): migrate admin settings views"
 <!-- checkpoint: done -->
 
 Modify/delete:
+
 - all `packages/web/src/pages/**/*.astro`
 - `packages/web/src/components/**/*.astro`
 - `packages/web/src/styles/dashboard.css`
 
 Implementation:
+
 - Remove remaining `<link rel="stylesheet" href="/src/styles/dashboard.css" />` references.
 - Replace any remaining legacy classes:
   - `button`
@@ -368,14 +420,17 @@ Implementation:
 - Delete `dashboard.css` after no references remain.
 
 Verify:
+
 ```bash
 grep -R "dashboard.css\|grid--\|form-grid\|badge--\|topbar\|list-item" -n packages/web/src || true
 bun --filter @backup-saas/web typecheck
 bun --filter @backup-saas/web build
 ```
+
 Expected: grep returns no legacy references except intentional text if any; typecheck/build pass.
 
 Commit:
+
 ```bash
 git add packages/web/src
 git rm packages/web/src/styles/dashboard.css
@@ -388,10 +443,12 @@ git commit -m "refactor(web): remove legacy dashboard css"
 <!-- checkpoint: done -->
 
 Modify:
+
 - `packages/web/src/styles/globals.css`
 - any migrated page/component needing polish
 
 Implementation:
+
 - Check color contrast in light/dark tokens.
 - Ensure focus rings visible on buttons, links, inputs, selects.
 - Ensure disabled states visible and non-interactive-looking.
@@ -404,14 +461,17 @@ Implementation:
 - Do not add decorative glow/gradient filler.
 
 Verify:
+
 ```bash
 bun --filter @backup-saas/web typecheck
 bun --filter @backup-saas/web build
 bun run format:check
 ```
+
 Expected: all pass. If formatting fails, run `bun run format`, then re-run checks.
 
 Commit:
+
 ```bash
 git add packages/web/src
 git commit -m "chore(web): polish shadcn migration"

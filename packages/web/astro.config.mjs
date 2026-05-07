@@ -1,18 +1,18 @@
-import node from '@astrojs/node';
-import react from '@astrojs/react';
-import tailwindcss from '@tailwindcss/vite';
-import { defineConfig } from 'astro/config';
+import node from "@astrojs/node";
+import react from "@astrojs/react";
+import tailwindcss from "@tailwindcss/vite";
+import { defineConfig } from "astro/config";
 
 export default defineConfig({
-  output: 'server',
-  adapter: node({ mode: 'standalone' }),
+  output: "server",
+  adapter: node({ mode: "standalone" }),
   integrations: [react()],
   vite: {
-    cacheDir: '../../node_modules/.vite-web',
+    cacheDir: "../../node_modules/.vite-web",
     plugins: [tailwindcss()],
   },
   server: {
-    host: '0.0.0.0',
+    host: "0.0.0.0",
     port: 4321,
   },
 });
