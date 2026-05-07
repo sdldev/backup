@@ -1,5 +1,6 @@
 ---
 import DashboardShell from '../../../../components/DashboardShell.astro';
+import { buildWorkspaceNavGroups } from '../../../../lib/dashboard-nav';
 import { apiFetch } from '../../../../lib/api';
 
 const { workspaceSlug } = Astro.params;
@@ -83,19 +84,11 @@ const ownerCount = membersPayload.data.filter((member) => member.role === 'owner
 const adminCount = membersPayload.data.filter((member) => member.role === 'admin').length;
 const canManageMembers = membership.role === 'owner' || membership.role === 'admin';
 const canTransferOwnership = membership.role === 'owner';
-const navItems = [
-  { href: `/workspace/${workspace.slug}`, label: 'Dashboard' },
-  { href: `/workspace/${workspace.slug}/onboarding`, label: 'Onboarding' },
-  { href: `/workspace/${workspace.slug}/projects`, label: 'Projects' },
-  { href: `/workspace/${workspace.slug}/backups`, label: 'Backups' },
-  { href: `/workspace/${workspace.slug}/settings/members`, label: 'Members', active: true },
-  { href: `/workspace/${workspace.slug}/settings/audit-log`, label: 'Audit Log' },
-];
 ---
 
 
   
-    <DashboardShell brandLabel="Workspace" brandName={workspace.name} sidebarNote={`${membership.role} · Team access`} navItems={navItems}>
+    <DashboardShell brandLabel="Workspace" brandName={workspace.name} pageTitle="Members" sidebarNote={`${membership.role} · Team access`} navGroups={buildWorkspaceNavGroups(workspace.slug, Astro.url.pathname)}>
       <header class="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
           <p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Workspace settings</p>
@@ -116,7 +109,7 @@ const navItems = [
       </section>
 
       {canManageMembers ? (
-        <section class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm" class="mt-6">
+        <section class="mt-6 rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
           <div class="section-heading"><div><p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Invite teammate</p><h2>Create invite</h2></div><span class="inline-flex rounded-md border bg-secondary px-2.5 py-0.5 text-xs font-semibold text-secondary-foreground">Token shown once</span></div>
           <form method="post" class="stack-form">
             <input type="hidden" name="action" value="create-invite" />
@@ -132,7 +125,7 @@ const navItems = [
         </section>
       ) : null}
 
-      <section class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm" class="mt-6">
+      <section class="mt-6 rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
         <div class="section-heading"><div><p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Team access</p><h2>Workspace members</h2></div>{canManageMembers ? <span class="inline-flex rounded-md border bg-secondary px-2.5 py-0.5 text-xs font-semibold text-secondary-foreground">Manage</span> : <span class="inline-flex rounded-md border bg-secondary px-2.5 py-0.5 text-xs font-semibold text-secondary-foreground">View only</span>}</div>
         {membersPayload.data.length === 0 ? (
           <div class="empty"><h2>No members yet</h2><p>Workspace members will appear here after invites are accepted.</p></div>
@@ -169,7 +162,7 @@ const navItems = [
       </section>
 
       {canTransferOwnership ? (
-        <section class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm" class="mt-6">
+        <section class="mt-6 rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
           <div class="section-heading"><div><p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Ownership</p><h2>Transfer ownership</h2></div><span class="inline-flex rounded-md border bg-secondary px-2.5 py-0.5 text-xs font-semibold text-secondary-foreground">Admin target only</span></div>
           <form method="post" class="stack-form">
             <input type="hidden" name="action" value="transfer-ownership" />

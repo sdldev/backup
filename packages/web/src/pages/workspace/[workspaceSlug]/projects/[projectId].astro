@@ -1,5 +1,6 @@
 ---
 import DashboardShell from '../../../../components/DashboardShell.astro';
+import { buildWorkspaceNavGroups } from '../../../../lib/dashboard-nav';
 import { apiFetch, API_BASE_URL } from '../../../../lib/api';
 
 const { workspaceSlug, projectId } = Astro.params;
@@ -44,18 +45,11 @@ const sourcesPayload = (await sourcesResponse.json()) as {
 
 const enabledSourceCount = sourcesPayload.data.filter((source) => source.state === 'enabled').length;
 const healthySourceCount = sourcesPayload.data.filter((source) => source.health === 'healthy').length;
-const navItems = [
-  { href: `/workspace/${workspace.slug}`, label: 'Dashboard' },
-  { href: `/workspace/${workspace.slug}/onboarding`, label: 'Onboarding' },
-  { href: `/workspace/${workspace.slug}/projects`, label: 'Projects', active: true },
-  { href: `/workspace/${workspace.slug}/backups`, label: 'Backups' },
-  { href: `/workspace/${workspace.slug}/settings/audit-log`, label: 'Audit Log' },
-];
 ---
 
 
   
-    <DashboardShell brandLabel="Project" brandName={project.name} sidebarNote={`${membership.role} · Database Sources`} navItems={navItems}>
+    <DashboardShell brandLabel="Workspace" brandName={workspace.name} pageTitle={project.name} sidebarNote={`${membership.role} · Database Sources`} navGroups={buildWorkspaceNavGroups(workspace.slug, Astro.url.pathname)}>
         <header class="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Database Sources</p>
@@ -83,7 +77,7 @@ const navItems = [
           </article>
         </section>
 
-        <section class="grid gap-4 lg:grid-cols-2" class="mt-6">
+        <section class="mt-6 grid gap-4 lg:grid-cols-2">
           <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
             <h2>Add disabled draft Source</h2>
             <p>Save encrypted credentials, test connection, then enable Source before running Backups.</p>

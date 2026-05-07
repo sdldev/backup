@@ -7,7 +7,7 @@ Last updated: 2026-05-08T00:00:00+07:00
 
 | # | Status | Task | Commit |
 |---|--------|------|--------|
-| 1 | ⬜ pending | Fix Astro duplicate class attributes and obvious layout breakage (checkpoint: none) | — |
+| 1 | 🔄 in-progress | Fix Astro duplicate class attributes and obvious layout breakage (checkpoint: none) | — |
 | 2 | ⬜ pending | Add missing shadcn primitives for dashboard composition (checkpoint: none) | — |
 | 3 | ⬜ pending | Refactor DashboardShell to official shadcn sidebar structure (checkpoint: done) | — |
 | 4 | ⬜ pending | Convert reusable dashboard wrappers to shadcn composition (checkpoint: none) | — |

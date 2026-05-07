@@ -1,5 +1,6 @@
 ---
 import DashboardShell from '../../../components/DashboardShell.astro';
+import { buildWorkspaceNavGroups } from '../../../lib/dashboard-nav';
 import { apiFetch, API_BASE_URL } from '../../../lib/api';
 
 const { workspaceSlug } = Astro.params;
@@ -25,18 +26,11 @@ const projectsPayload = (await projectsResponse.json()) as {
 };
 
 const canCreateProject = membership.role === 'owner' || membership.role === 'admin';
-const navItems = [
-  { href: `/workspace/${workspace.slug}`, label: 'Dashboard' },
-  { href: `/workspace/${workspace.slug}/onboarding`, label: 'Onboarding' },
-  { href: `/workspace/${workspace.slug}/projects`, label: 'Projects', active: true },
-  { href: `/workspace/${workspace.slug}/backups`, label: 'Backups' },
-  { href: `/workspace/${workspace.slug}/settings/audit-log`, label: 'Audit Log' },
-];
 ---
 
 
   
-    <DashboardShell brandLabel="Workspace" brandName={workspace.name} sidebarNote={`${membership.role} · Project management`} navItems={navItems}>
+    <DashboardShell brandLabel="Workspace" brandName={workspace.name} pageTitle="Projects" sidebarNote={`${membership.role} · Project management`} navGroups={buildWorkspaceNavGroups(workspace.slug, Astro.url.pathname)}>
       <header class="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
           <p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Projects</p>
@@ -63,7 +57,7 @@ const navItems = [
         </article>
       </section>
 
-      <section class="grid gap-4 lg:grid-cols-2" class="mt-6">
+      <section class="mt-6 grid gap-4 lg:grid-cols-2">
         {
           canCreateProject ? (
             <article class="rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
