@@ -14,6 +14,44 @@ const backupRows = [
   { label: 'Artifact', value: 'Terenkripsi' },
   { label: 'Bukti kerja', value: 'Audit log' },
 ];
+
+const painPoints = [
+  {
+    title: 'Backup client tersebar',
+    body: 'Sebagian ada di hosting, sebagian di server sendiri, sebagian hanya dicatat manual. Tim sulit tahu backup mana yang masih valid.',
+  },
+  {
+    title: 'Credential sulit dikontrol',
+    body: 'Akses database sering dibagikan lewat chat atau dokumen internal. Saat tim berubah, jejak akses makin sulit dirapikan.',
+  },
+  {
+    title: 'Bukti backup tidak rapi',
+    body: 'Client bertanya kapan backup terakhir dibuat, tetapi tim harus mencari log, file, atau screenshot dari banyak tempat.',
+  },
+];
+
+const workflowSteps = [
+  {
+    step: '01',
+    title: 'Buat workspace',
+    body: 'Pisahkan pekerjaan agency, client group, atau tim internal dalam workspace yang jelas.',
+  },
+  {
+    step: '02',
+    title: 'Tambah project client',
+    body: 'Kelompokkan website, aplikasi, atau aset client agar backup tidak tercampur.',
+  },
+  {
+    step: '03',
+    title: 'Sambungkan database source',
+    body: 'Daftarkan database MySQL atau PostgreSQL yang perlu diamankan untuk tiap project.',
+  },
+  {
+    step: '04',
+    title: 'Jalankan dan unduh backup',
+    body: 'Buat backup manual, simpan artifact terenkripsi, lalu unduh saat dibutuhkan selama masa retensi.',
+  },
+];
 ---
 
 <BaseLayout
@@ -83,6 +121,49 @@ const backupRows = [
           </dl>
         </CardContent>
       </Card>
+    </section>
+
+    <section class="mx-auto grid w-full max-w-6xl gap-6 py-14 md:py-18" aria-labelledby="agency-problems">
+      <div class="max-w-3xl space-y-3">
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Masalah agency</p>
+        <h2 id="agency-problems" class="text-3xl font-semibold tracking-tight md:text-4xl">
+          Backup client sering gagal bukan karena teknis, tapi karena prosesnya berantakan
+        </h2>
+      </div>
+      <div class="grid gap-4 md:grid-cols-3">
+        {painPoints.map((point) => (
+          <Card>
+            <CardHeader>
+              <CardTitle>{point.title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p class="leading-7 text-muted-foreground">{point.body}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </section>
+
+    <section id="cara-kerja" class="mx-auto grid w-full max-w-6xl gap-6 py-14 md:py-18" aria-labelledby="workflow-title">
+      <div class="max-w-3xl space-y-3">
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Cara kerja</p>
+        <h2 id="workflow-title" class="text-3xl font-semibold tracking-tight md:text-4xl">
+          Satu alur untuk semua database client
+        </h2>
+      </div>
+      <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {workflowSteps.map((item) => (
+          <Card>
+            <CardHeader>
+              <p class="text-sm font-semibold text-primary">{item.step}</p>
+              <CardTitle>{item.title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p class="leading-7 text-muted-foreground">{item.body}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </section>
   </main>
 </BaseLayout>
