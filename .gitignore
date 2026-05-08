@@ -7,3 +7,5 @@ dist/
 .scratch/
 .DS_Store
 .playwright-cli/
+# TypeScript build info
+*.tsbuildinfo
