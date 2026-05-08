@@ -1,6 +1,11 @@
+x-bun-app: &bun-app
+  restart: unless-stopped
+  init: true
+
 services:
   postgres:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_USER: backup_saas
       POSTGRES_PASSWORD: backup_saas
@@ -12,10 +17,12 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
     ports:
       - "5433:5432"
 
   app:
+    <<: *bun-app
     build:
       context: .
       dockerfile: packages/app/Dockerfile
@@ -29,8 +36,10 @@ services:
       PORT: "3000"
       OAUTH_REDIRECT_BASE_URL: http://localhost:3000
       WEB_BASE_URL: http://localhost:4321
+      OBJECT_STORAGE_LOCAL_DIR: /workspace/.storage/backups
     volumes:
       - .:/workspace
+      - app_storage:/workspace/.storage
     depends_on:
       postgres:
         condition: service_healthy
@@ -38,6 +47,7 @@ services:
       - "3000:3000"
 
   web:
+    <<: *bun-app
     build:
       context: .
       dockerfile: packages/web/Dockerfile
@@ -56,10 +66,12 @@ services:
     ports:
       - "4321:4321"
     depends_on:
-      - app
+      app:
+        condition: service_started
 
   mysql:
     image: mysql:8.4
+    restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: backup_saas
       MYSQL_DATABASE: backup_saas_fixture
@@ -70,11 +82,13 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+      start_period: 20s
     ports:
       - "3317:3306"
 
   minio:
     image: minio/minio:latest
+    restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: minioadmin
@@ -88,3 +102,4 @@ services:
 volumes:
   postgres_data:
   minio_data:
+  app_storage:
