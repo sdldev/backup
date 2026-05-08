@@ -65,17 +65,17 @@ docker compose exec app sh -lc 'bun --filter @backup-saas/app db:seed:dev'
 Owner opens:
 
 ```text
-http://localhost:8080/workspace/dev-workspace
+http://localhost:4321/workspace/dev-workspace
 ```
 
-Invite smoke through nginx single origin:
+Invite smoke through Astro dev server:
 
 ```sh
-curl -H 'Origin: http://localhost:8080' \
+curl -H 'Origin: http://localhost:4321' \
   -H 'Cookie: backup_saas_session=dev-session-token' \
   -H 'Content-Type: application/x-www-form-urlencoded' \
   --data 'action=create-invite&email=dev-invitee@example.com&role=member' \
-  http://localhost:8080/workspace/dev-workspace/settings/members
+  http://localhost:4321/workspace/dev-workspace/settings/members
 ```
 
 Copy the returned `/invite/:token` link, then accept as invitee:
@@ -83,7 +83,7 @@ Copy the returned `/invite/:token` link, then accept as invitee:
 ```sh
 curl -X POST \
   -H 'Cookie: backup_saas_session=dev-invitee-session-token' \
-  http://localhost:8080/v1/invites/$TOKEN/accept
+  http://localhost:3000/v1/invites/$TOKEN/accept
 ```
 
 Expected accept response includes:
@@ -107,7 +107,7 @@ After rebuilding the runtime image, verify tool presence inside the container:
 
 ```sh
 docker compose build app web
-docker compose up -d --force-recreate app web nginx
+docker compose up -d --force-recreate app web
 docker compose exec app sh -lc 'CHECK_DUMP_TOOLS=true bun test packages/app/src/services/dump-tools.test.ts'
 ```
 

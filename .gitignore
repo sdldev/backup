@@ -5,3 +5,4 @@ dist/
 .storage/
 .scratch/
 .DS_Store
+.playwright-cli/

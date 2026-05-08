@@ -1,9 +1,7 @@
 ---
 import '../styles/globals.css';
 import { API_BASE_URL } from '../lib/api';
-import AppSidebar from './dashboard/AppSidebar.astro';
-import DashboardHeader from './dashboard/DashboardHeader.astro';
-import { SidebarInset, SidebarProvider } from './ui/sidebar';
+import DashboardFrame from './dashboard/DashboardFrame';
 
 import type { DashboardNavGroup, DashboardNavItem } from '../lib/dashboard-nav';
 
@@ -17,21 +15,15 @@ const { brandLabel, brandName, navItems = [], navGroups, sidebarNote, pageTitle 
 };
 ---
 
-<SidebarProvider client:load>
-  <AppSidebar brandLabel={brandLabel} brandName={brandName} navItems={navItems} navGroups={navGroups} sidebarNote={sidebarNote} />
-  <SidebarInset className="dashboard-surface min-w-0">
-    <DashboardHeader pageTitle={pageTitle} />
-    <main class="mx-auto w-full max-w-7xl p-4 md:p-6 lg:p-7">
-      <slot />
-    </main>
-  </SidebarInset>
-</SidebarProvider>
+<DashboardFrame brandLabel={brandLabel} brandName={brandName} navItems={navItems} navGroups={navGroups} sidebarNote={sidebarNote} pageTitle={pageTitle} client:load>
+  <slot />
+</DashboardFrame>
 
 <script is:inline define:vars={{ apiBaseUrl: API_BASE_URL }}>
-  document.querySelectorAll('[data-logout]').forEach((button) => {
-    button.addEventListener('click', async () => {
-      await fetch(`${apiBaseUrl}/v1/auth/logout`, { method: 'POST', credentials: 'include' });
-      window.location.href = '/login';
-    });
+  document.addEventListener('click', async (event) => {
+    const button = event.target?.closest?.('[data-logout]');
+    if (!button) return;
+    await fetch(`${apiBaseUrl}/v1/auth/logout`, { method: 'POST', credentials: 'include' });
+    window.location.href = '/login';
   });
 </script>

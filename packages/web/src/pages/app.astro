@@ -1,12 +1,9 @@
 ---
 import DashboardShell from '../components/DashboardShell.astro';
-import EmptyState from '../components/dashboard/EmptyState.astro';
-import PageHeader from '../components/dashboard/PageHeader.astro';
 import StatCard from '../components/dashboard/StatCard.astro';
-import StatusBadge from '../components/dashboard/StatusBadge.astro';
 import { Button } from '../components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { apiFetch } from '../lib/api';
+import { buildAppNavGroups } from '../lib/dashboard-nav';
 
 const response = await apiFetch('/v1/workspaces', Astro.request);
 
@@ -36,58 +33,55 @@ const payload = (await response.json()) as {
   }>;
 };
 
+const hasRealWorkspaces = payload.data.length > 0;
 const readyStorageCount = payload.data.filter((item) => item.workspace.storage_status === 'ready').length;
+const firstWorkspace = payload.data[0]?.workspace;
 ---
 
 <DashboardShell
   brandLabel="Manual Backup"
   brandName="Portal"
-  sidebarNote="Encrypted manual Backups for Projects and Database Sources."
-  navItems={[{ href: '/app', label: 'Workspaces', active: true }, { href: '/app/new-workspace', label: 'New Workspace' }]}
+  pageTitle="Dashboard"
+  sidebarNote=""
+  navGroups={buildAppNavGroups(Astro.url.pathname)}
 >
-  <PageHeader eyebrow="Workspace launcher" title="Your Workspaces" description="Choose tenant to manage Projects, Database Sources, Backups, and Audit Log.">
-    <Button slot="actions" asChild>
-      <a href="/app/new-workspace">Create Workspace</a>
-    </Button>
-  </PageHeader>
+  <section class="grid gap-5">
+    <div class="dashboard-hero rounded-2xl border p-8 shadow-xl shadow-slate-950/10 md:p-12">
+      <div class="relative z-10 max-w-xl">
+        <p class="text-sm font-medium text-primary-foreground/75">Index Dashboard</p>
+        <h2 class="mt-5 text-4xl font-semibold tracking-tight md:text-5xl">Workspace overview</h2>
+        <p class="mt-5 max-w-lg text-sm leading-6 text-primary-foreground/75">Pilih Workspace untuk masuk ke dashboard tenant, cek kesiapan Backup Storage, dan lanjutkan setup manual Backup.</p>
+      </div>
+    </div>
 
-  <section class="grid gap-4 md:grid-cols-3" aria-label="Workspace summary">
-    <StatCard label="Total Workspaces" value={payload.data.length} />
-    <StatCard label="Storage Ready" value={readyStorageCount} />
-    <StatCard label="Active Scope" value="Manual" />
+    <section class="grid gap-4 md:grid-cols-3" aria-label="Workspace summary">
+      <StatCard label="Total Workspaces" value={payload.data.length}>
+        <p class="text-xs text-muted-foreground">Tenant scopes available</p>
+      </StatCard>
+      <StatCard label="Storage Ready" value={readyStorageCount}>
+        <p class="text-xs text-muted-foreground">Backup Storage provisioned</p>
+      </StatCard>
+      <StatCard label="Active Scope" value="Manual">
+        <p class="text-xs text-muted-foreground">Phase 1 Backup mode</p>
+      </StatCard>
+    </section>
+
+    <section class="grid gap-4 lg:grid-cols-2">
+      <div class="rounded-2xl border bg-card/95 p-5 shadow-sm backdrop-blur ">
+        <h2 class="text-lg font-semibold tracking-tight">Next action</h2>
+        <p class="mt-2 text-sm leading-6 text-muted-foreground">
+          {hasRealWorkspaces ? 'Lanjutkan ke Workspace aktif untuk mengelola Project, Database Source, dan Backup.' : 'Buat Workspace pertama untuk memulai New Tenant Onboarding.'}
+        </p>
+        <div class="mt-5 flex flex-wrap gap-2">
+          <Button asChild><a href={firstWorkspace ? `/workspace/${firstWorkspace.slug}` : '/app/new-workspace'}>{firstWorkspace ? 'Open Workspace' : 'Create Workspace'}</a></Button>
+          <Button asChild variant="secondary"><a href="/app/workspaces">View Workspaces</a></Button>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border bg-card/95 p-5 shadow-sm backdrop-blur ">
+        <h2 class="text-lg font-semibold tracking-tight">Backup scope</h2>
+        <p class="mt-2 text-sm leading-6 text-muted-foreground">Phase 1 mendukung manual Backup untuk MySQL-family dan PostgreSQL-family Database Sources. Schedule, notifications, dan webhooks masih Coming soon.</p>
+      </div>
+    </section>
   </section>
-
-  <Card className="mt-6">
-    <CardHeader>
-      <CardTitle>Workspace list</CardTitle>
-    </CardHeader>
-    <CardContent>
-      {
-        payload.data.length === 0 ? (
-          <EmptyState title="No Workspace yet" description="Create your first Workspace to configure Projects, Database Sources, and manual Backups.">
-            <Button slot="action" asChild>
-              <a href="/app/new-workspace">Create first Workspace</a>
-            </Button>
-          </EmptyState>
-        ) : (
-          <div class="grid gap-3">
-            {payload.data.map((item) => (
-              <article class="flex flex-col gap-3 rounded-lg border p-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <a class="font-semibold hover:underline" href={`/workspace/${item.workspace.slug}`}>{item.workspace.name}</a>
-                  <p class="mt-1 text-sm text-muted-foreground">{item.membership.role} · {item.plan.name} · onboarding {item.workspace.onboarding_step}</p>
-                </div>
-                <div class="flex flex-wrap items-center gap-2">
-                  <StatusBadge status={item.workspace.storage_status} label={`Storage ${item.workspace.storage_status}`} />
-                  <Button asChild variant="outline" size="sm">
-                    <a href={`/workspace/${item.workspace.slug}`}>Open</a>
-                  </Button>
-                </div>
-              </article>
-            ))}
-          </div>
-        )
-      }
-    </CardContent>
-  </Card>
 </DashboardShell>
