@@ -1,13 +1,17 @@
 ---
 import '../styles/globals.css';
 
-const { title = 'Manual Backup SaaS Beta' } = Astro.props as { title?: string };
+const {
+  title = 'Manual Backup SaaS Beta',
+  description = 'Manual Backup Portal untuk backup database terenkripsi.',
+} = Astro.props as { title?: string; description?: string };
 ---
 
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width" />
+    <meta name="description" content={description} />
     <title>{title}</title>
     <script is:inline>
       (() => {

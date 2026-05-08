@@ -5,61 +5,81 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import BaseLayout from '../layouts/BaseLayout.astro';
 
 export const prerender = true;
+
+const trustItems = ['MySQL', 'PostgreSQL', 'S3/R2/MinIO', 'Audit log'];
+
+const backupRows = [
+  { label: 'Mode backup', value: 'Manual' },
+  { label: 'Database', value: 'MySQL + PostgreSQL' },
+  { label: 'Artifact', value: 'Terenkripsi' },
+  { label: 'Bukti kerja', value: 'Audit log' },
+];
 ---
 
-<BaseLayout title="Manual Backup SaaS Beta">
+<BaseLayout
+  title="Backup Database Client untuk Agency — Manual Backup Portal"
+  description="Backup database MySQL dan PostgreSQL untuk agency: terenkripsi, per client, bisa diunduh, dan tercatat di audit log."
+>
   <main class="min-h-screen bg-background px-6 py-6 text-foreground md:px-10">
-    <nav class="mx-auto flex w-full max-w-6xl items-center justify-between gap-4" aria-label="Main">
+    <nav class="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4" aria-label="Main">
       <a class="grid gap-0.5" href="/">
         <span class="text-xs font-bold uppercase tracking-[0.24em] text-primary">Manual Backup</span>
         <span class="text-lg font-semibold tracking-tight">Portal</span>
       </a>
-      <div class="flex items-center gap-2">
+      <div class="flex flex-wrap items-center justify-end gap-2">
+        <div class="hidden items-center gap-4 text-sm font-medium text-muted-foreground sm:flex">
+          <a class="transition hover:text-foreground" href="#cara-kerja">Cara kerja</a>
+          <a class="transition hover:text-foreground" href="#keamanan">Keamanan</a>
+          <a class="transition hover:text-foreground" href="#untuk-siapa">Untuk siapa</a>
+        </div>
         <ThemeToggle client:load />
         <Button asChild>
-          <a href="/login">Sign in</a>
+          <a href="/login">Masuk</a>
         </Button>
       </div>
     </nav>
 
-    <section class="mx-auto grid w-full max-w-6xl gap-8 py-16 md:grid-cols-[1.15fr_0.85fr] md:py-24">
+    <section class="mx-auto grid w-full max-w-6xl gap-10 py-16 md:grid-cols-[1.15fr_0.85fr] md:py-24">
       <div class="flex flex-col justify-center gap-6">
-        <div class="inline-flex w-fit rounded-full border bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">Manual Backup SaaS Beta</div>
+        <div class="inline-flex w-fit rounded-full border bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+          Backup database untuk agency
+        </div>
         <div class="space-y-4">
-          <h1 class="max-w-3xl text-4xl font-semibold tracking-tight md:text-6xl">Encrypted manual Backups for agency Workspaces</h1>
+          <h1 class="max-w-3xl text-4xl font-semibold tracking-tight md:text-6xl">
+            Jaga database client tetap aman, tanpa spreadsheet backup
+          </h1>
           <p class="max-w-2xl text-base leading-7 text-muted-foreground md:text-lg">
-            Sign in with Google or GitHub, create Workspaces, configure Projects and Database Sources, run manual Backup Jobs, download retained Backup artifacts, and review Audit Logs.
+            Kelola backup database MySQL dan PostgreSQL per client. Backup terenkripsi, bisa diunduh saat dibutuhkan, dan setiap tindakan penting tercatat di audit log.
           </p>
         </div>
         <div class="flex flex-wrap gap-3">
           <Button asChild size="lg">
-            <a href="/login">Sign in</a>
+            <a href="/login">Mulai beta</a>
           </Button>
           <Button asChild variant="outline" size="lg">
-            <a href="/app">Open app</a>
+            <a href="#cara-kerja">Lihat cara kerja</a>
           </Button>
         </div>
+        <ul class="flex flex-wrap gap-2 text-sm text-muted-foreground" aria-label="Dukungan platform">
+          {trustItems.map((item) => (
+            <li class="rounded-full border bg-card px-3 py-1">{item}</li>
+          ))}
+        </ul>
       </div>
 
       <Card className="self-start md:self-center">
         <CardHeader>
-          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Phase 1 scope</p>
-          <CardTitle>Backup operations dashboard</CardTitle>
+          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Operasi backup client</p>
+          <CardTitle>Satu portal untuk backup database client</CardTitle>
         </CardHeader>
         <CardContent>
           <dl class="grid gap-4">
-            <div class="flex items-center justify-between rounded-lg border p-4">
-              <dt class="text-sm text-muted-foreground">Backup mode</dt>
-              <dd class="text-xl font-semibold">Manual</dd>
-            </div>
-            <div class="flex items-center justify-between rounded-lg border p-4">
-              <dt class="text-sm text-muted-foreground">Storage</dt>
-              <dd class="text-xl font-semibold">Encrypted</dd>
-            </div>
-            <div class="flex items-center justify-between rounded-lg border p-4">
-              <dt class="text-sm text-muted-foreground">Audit</dt>
-              <dd class="text-xl font-semibold">Included</dd>
-            </div>
+            {backupRows.map((row) => (
+              <div class="flex items-center justify-between rounded-lg border p-4">
+                <dt class="text-sm text-muted-foreground">{row.label}</dt>
+                <dd class="text-right text-lg font-semibold">{row.value}</dd>
+              </div>
+            ))}
           </dl>
         </CardContent>
       </Card>
