@@ -52,6 +52,36 @@ const workflowSteps = [
     body: 'Buat backup manual, simpan artifact terenkripsi, lalu unduh saat dibutuhkan selama masa retensi.',
   },
 ];
+
+const securityPoints = [
+  'Backup artifact disimpan terenkripsi.',
+  'Credential database disimpan terenkripsi dan dimasked setelah tersimpan.',
+  'Audit log mencatat tindakan penting seperti akses, perubahan credential, dan download backup.',
+  'Storage dapat memakai AWS S3, Cloudflare R2, MinIO, atau local disk untuk self-hosted deployment.',
+];
+
+const audiences = [
+  {
+    label: 'Primary',
+    title: 'Agency dan freelancer team',
+    body: 'Kelola backup database untuk banyak client dari satu portal tanpa spreadsheet dan catatan manual.',
+  },
+  {
+    label: 'Secondary',
+    title: 'Owner UMKM',
+    body: 'Jaga database toko, website, atau sistem operasional tetap punya salinan yang bisa diunduh.',
+  },
+  {
+    label: 'Secondary',
+    title: 'Internal IT',
+    body: 'Rapikan backup manual database operasional dengan workspace, project, dan audit log.',
+  },
+  {
+    label: 'Secondary',
+    title: 'Hosting kecil',
+    body: 'Siapkan layanan backup database sebagai add-on untuk client yang butuh bukti kerja lebih rapi.',
+  },
+];
 ---
 
 <BaseLayout
@@ -163,6 +193,84 @@ const workflowSteps = [
             </CardContent>
           </Card>
         ))}
+      </div>
+    </section>
+
+    <section id="keamanan" class="mx-auto grid w-full max-w-6xl gap-6 py-14 md:grid-cols-[0.9fr_1.1fr] md:py-18" aria-labelledby="security-title">
+      <div class="space-y-3">
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Keamanan</p>
+        <h2 id="security-title" class="text-3xl font-semibold tracking-tight md:text-4xl">
+          Dibuat untuk backup yang bisa dipercaya, bukan sekadar file dump
+        </h2>
+        <p class="leading-7 text-muted-foreground">
+          Tidak ada klaim compliance atau zero data loss. Fokus rilis awal adalah backup manual yang terenkripsi dan bisa diaudit.
+        </p>
+      </div>
+      <div class="grid gap-3">
+        {securityPoints.map((point) => (
+          <Card>
+            <CardContent className="p-5">
+              <p class="leading-7 text-muted-foreground">{point}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </section>
+
+    <section id="untuk-siapa" class="mx-auto grid w-full max-w-6xl gap-6 py-14 md:py-18" aria-labelledby="audience-title">
+      <div class="max-w-3xl space-y-3">
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Untuk siapa</p>
+        <h2 id="audience-title" class="text-3xl font-semibold tracking-tight md:text-4xl">
+          Fokus untuk agency, tetap berguna untuk tim lain
+        </h2>
+      </div>
+      <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {audiences.map((audience) => (
+          <Card className={audience.label === 'Primary' ? 'border-primary bg-primary/5 shadow-sm' : ''}>
+            <CardHeader>
+              <p class="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">{audience.label}</p>
+              <CardTitle>{audience.title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p class="leading-7 text-muted-foreground">{audience.body}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </section>
+
+    <section class="mx-auto w-full max-w-6xl py-14 md:py-18" aria-labelledby="phase-title">
+      <Card className="border-primary/40 bg-muted/60">
+        <CardHeader>
+          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Rilis awal</p>
+          <CardTitle id="phase-title">Jujur soal scope saat ini</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div class="grid gap-3 leading-7 text-muted-foreground md:grid-cols-3">
+            <p>Saat ini fokus ke manual backup.</p>
+            <p>Scheduled backup dan notifikasi direncanakan untuk fase berikutnya.</p>
+            <p>Restore otomatis belum termasuk di rilis awal.</p>
+          </div>
+        </CardContent>
+      </Card>
+    </section>
+
+    <section class="mx-auto w-full max-w-6xl py-14 pb-20 md:py-18 md:pb-24" aria-labelledby="final-cta-title">
+      <div class="rounded-2xl border bg-card p-8 shadow-sm md:p-10">
+        <div class="grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
+          <div class="space-y-3">
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Mulai sekarang</p>
+            <h2 id="final-cta-title" class="text-3xl font-semibold tracking-tight md:text-4xl">
+              Amankan database client pertama hari ini
+            </h2>
+            <p class="max-w-2xl leading-7 text-muted-foreground">
+              Mulai dari satu workspace, satu project, dan satu database source. Rapikan proses backup sebelum client membutuhkannya.
+            </p>
+          </div>
+          <Button asChild size="lg">
+            <a href="/login">Mulai beta</a>
+          </Button>
+        </div>
       </div>
     </section>
   </main>
