@@ -1,0 +1,110 @@
+---
+import DashboardShell from '../../components/DashboardShell.astro';
+import { buildAppNavGroups } from '../../lib/dashboard-nav';
+import FormSection from '../../components/dashboard/FormSection.astro';
+import PageHeader from '../../components/dashboard/PageHeader.astro';
+import { Button } from '../../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { Field, FieldGroup, FieldLabel } from '../../components/ui/field';
+import { Input } from '../../components/ui/input';
+import { Select } from '../../components/ui/select';
+import { API_BASE_URL, apiFetch } from '../../lib/api';
+
+const sessionResponse = await apiFetch('/v1/session', Astro.request);
+if (sessionResponse.status === 401) return Astro.redirect('/login');
+if (!sessionResponse.ok) return Astro.redirect('/login?error=load_failed');
+---
+
+<DashboardShell
+  brandLabel="Manual Backup"
+  pageTitle="New Workspace"
+  brandName="Portal"
+  sidebarNote=""
+  navGroups={buildAppNavGroups(Astro.url.pathname)}
+>
+  <PageHeader eyebrow="New Tenant Onboarding" title="Create Workspace" description="Workspace groups Projects, Database Sources, Backups, members, plan limits, and Audit Logs.">
+    <Button slot="actions" asChild variant="outline">
+      <a href="/app">Back to Workspaces</a>
+    </Button>
+  </PageHeader>
+
+  <section class="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+    <FormSection title="Workspace details">
+      <form id="workspace-form" class="flex flex-col gap-4">
+        <FieldGroup>
+          <Field>
+            <FieldLabel htmlFor="workspace-name">Workspace name</FieldLabel>
+            <Input id="workspace-name" name="name" required maxLength={120} autoComplete="organization" placeholder="Agency or client name" />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="workspace-slug">Workspace slug optional</FieldLabel>
+            <Input id="workspace-slug" name="slug" maxLength={48} pattern="[a-z0-9-]+" placeholder="client-name" />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="workspace-timezone">Timezone</FieldLabel>
+            <Input id="workspace-timezone" name="timezone" required value="Asia/Jakarta" />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="workspace-requested-plan">Requested plan</FieldLabel>
+            <Select id="workspace-requested-plan" name="requested_plan">
+              <option value="basic">Basic</option>
+              <option value="pro">Pro request</option>
+              <option value="agency">Agency request</option>
+            </Select>
+          </Field>
+        </FieldGroup>
+        <Button type="submit">Create Workspace</Button>
+      </form>
+      <p class="mt-4 text-sm text-muted-foreground" id="form-message" role="status"></p>
+    </FormSection>
+
+    <Card className="bg-muted/30">
+      <CardHeader>
+        <CardTitle>What happens next</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ul class="grid gap-3 text-sm text-muted-foreground">
+          <li class="rounded-lg border bg-background p-3">Workspace is created on Basic plan.</li>
+          <li class="rounded-lg border bg-background p-3">Pro/Agency requests create pending plan request.</li>
+          <li class="rounded-lg border bg-background p-3">You become Workspace Owner.</li>
+          <li class="rounded-lg border bg-background p-3">Backup Storage can be provisioned from onboarding.</li>
+        </ul>
+      </CardContent>
+    </Card>
+  </section>
+</DashboardShell>
+
+<script is:inline define:vars={{ apiBaseUrl: API_BASE_URL }}>
+  const form = document.getElementById('workspace-form');
+  const message = document.getElementById('form-message');
+
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    message.textContent = 'Creating Workspace...';
+    message.classList.remove('text-destructive');
+
+    const formData = new FormData(form);
+    const body = {
+      name: String(formData.get('name') ?? ''),
+      slug: String(formData.get('slug') ?? '') || undefined,
+      timezone: String(formData.get('timezone') ?? ''),
+      requested_plan: String(formData.get('requested_plan') ?? 'basic'),
+    };
+
+    const response = await fetch(`${apiBaseUrl}/v1/workspaces`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    const payload = await response.json();
+    if (!response.ok) {
+      message.textContent = payload.error?.message ?? 'Workspace could not be created';
+      message.classList.add('text-destructive');
+      return;
+    }
+
+    window.location.href = `/workspace/${payload.data.workspace.slug}/onboarding`;
+  });
+</script>

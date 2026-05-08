@@ -1,0 +1,54 @@
+---
+import DashboardShell from '../../../../components/DashboardShell.astro';
+import EmptyState from '../../../../components/dashboard/EmptyState.astro';
+import PageHeader from '../../../../components/dashboard/PageHeader.astro';
+import StatCard from '../../../../components/dashboard/StatCard.astro';
+import { Badge } from '../../../../components/ui/badge';
+import { Button } from '../../../../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../../components/ui/card';
+import { buildWorkspaceNavGroups } from '../../../../lib/dashboard-nav';
+import { apiFetch } from '../../../../lib/api';
+
+const { workspaceSlug } = Astro.params;
+const workspaceResponse = await apiFetch(`/v1/workspaces/by-slug/${workspaceSlug}`, Astro.request);
+if (workspaceResponse.status === 401) return Astro.redirect('/login');
+if (workspaceResponse.status === 404) return Astro.redirect('/app');
+if (!workspaceResponse.ok) return Astro.redirect('/login?error=load_failed');
+const workspacePayload = (await workspaceResponse.json()) as { data: { workspace: { id: string; name: string; slug: string }; membership: { role: string } } };
+const { workspace, membership } = workspacePayload.data;
+const auditResponse = await apiFetch(`/v1/workspaces/${workspace.id}/audit-log`, Astro.request);
+if (!auditResponse.ok) return Astro.redirect('/login?error=load_failed');
+const auditPayload = (await auditResponse.json()) as { data: Array<{ id: string; event_type: string; actor: { type: string; user_id: string | null }; resource_type: string; resource_id: string | null; metadata: Record<string, unknown>; created_at: string }> };
+const userEventCount = auditPayload.data.filter((event) => event.actor.type === 'user').length;
+const resourceTypeCount = new Set(auditPayload.data.map((event) => event.resource_type)).size;
+---
+
+<DashboardShell brandLabel="Workspace" brandName={workspace.name} pageTitle="Audit Log" sidebarNote={`${membership.role} · Security events`} navGroups={buildWorkspaceNavGroups(workspace.slug, Astro.url.pathname)}>
+  <PageHeader eyebrow="Workspace settings" title="Audit Log" description="Review security and data-access events. Sensitive metadata is redacted before storage.">
+    <Button slot="actions" asChild variant="outline"><a href={`/workspace/${workspace.slug}`}>Dashboard</a></Button>
+  </PageHeader>
+  <section class="grid gap-4 md:grid-cols-3" aria-label="Audit summary">
+    <StatCard label="Events" value={auditPayload.data.length} />
+    <StatCard label="User Actor Events" value={userEventCount} />
+    <StatCard label="Resource Types" value={resourceTypeCount} />
+  </section>
+  <Card className="mt-6">
+    <CardHeader><CardTitle>Latest events</CardTitle></CardHeader>
+    <CardContent>
+      {auditPayload.data.length === 0 ? <EmptyState title="No Audit Log events yet" description="Security events will appear here after Workspace actions occur." /> : (
+        <ol class="grid gap-3">
+          {auditPayload.data.map((event) => (
+            <li class="flex flex-col justify-between gap-4 rounded-lg border p-3 lg:flex-row lg:items-start">
+              <div class="min-w-0">
+                <strong>{event.event_type}</strong>
+                <p class="text-sm text-muted-foreground">{event.created_at} · {event.actor.type} · {event.resource_type}</p>
+                <pre class="metadata-block mt-2 overflow-auto rounded-md bg-muted p-3 text-xs">{JSON.stringify(event.metadata, null, 2)}</pre>
+              </div>
+              <Badge variant="secondary">{event.resource_type}</Badge>
+            </li>
+          ))}
+        </ol>
+      )}
+    </CardContent>
+  </Card>
+</DashboardShell>

@@ -1,0 +1,134 @@
+---
+import DashboardShell from '../../../components/DashboardShell.astro';
+import EmptyState from '../../../components/dashboard/EmptyState.astro';
+import FormSection from '../../../components/dashboard/FormSection.astro';
+import PageHeader from '../../../components/dashboard/PageHeader.astro';
+import StatCard from '../../../components/dashboard/StatCard.astro';
+import { Button } from '../../../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
+import { Field, FieldGroup, FieldLabel } from '../../../components/ui/field';
+import { Input } from '../../../components/ui/input';
+import { buildWorkspaceNavGroups } from '../../../lib/dashboard-nav';
+import { apiFetch, API_BASE_URL } from '../../../lib/api';
+
+const { workspaceSlug } = Astro.params;
+const workspaceResponse = await apiFetch(`/v1/workspaces/by-slug/${workspaceSlug}`, Astro.request);
+
+if (workspaceResponse.status === 401) return Astro.redirect('/login');
+if (workspaceResponse.status === 404) return Astro.redirect('/app');
+if (!workspaceResponse.ok) return Astro.redirect('/login?error=load_failed');
+
+const workspacePayload = (await workspaceResponse.json()) as {
+  data: {
+    workspace: { id: string; name: string; slug: string };
+    membership: { role: string };
+  };
+};
+
+const { workspace, membership } = workspacePayload.data;
+const projectsResponse = await apiFetch(`/v1/workspaces/${workspace.id}/projects`, Astro.request);
+if (!projectsResponse.ok) return Astro.redirect('/login?error=load_failed');
+
+const projectsPayload = (await projectsResponse.json()) as {
+  data: Array<{ id: string; name: string; website_url: string | null }>;
+};
+
+const canCreateProject = membership.role === 'owner' || membership.role === 'admin';
+---
+
+<DashboardShell brandLabel="Workspace" brandName={workspace.name} pageTitle="Projects" sidebarNote={`${membership.role} · Project management`} navGroups={buildWorkspaceNavGroups(workspace.slug, Astro.url.pathname)}>
+  <PageHeader eyebrow="Projects" title={workspace.name} description="Group Database Sources by client, website, or application before running manual Backups.">
+    <Button slot="actions" asChild variant="outline"><a href={`/workspace/${workspace.slug}`}>Dashboard</a></Button>
+  </PageHeader>
+
+  <section class="grid gap-4 md:grid-cols-3" aria-label="Project summary">
+    <StatCard label="Projects" value={projectsPayload.data.length} />
+    <StatCard label="Role" value={membership.role} />
+    <StatCard label="Create Access" value={canCreateProject ? 'Allowed' : 'View only'} />
+  </section>
+
+  <section class="mt-6 grid gap-4 lg:grid-cols-2">
+    {
+      canCreateProject ? (
+        <FormSection title="Create Project" description="Create a Project before adding Database Sources.">
+          <form id="project-form" class="flex flex-col gap-4">
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="project-name">Project name</FieldLabel>
+                <Input id="project-name" name="name" required maxLength={120} placeholder="Client website or app name" />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="project-website-url">Website URL optional</FieldLabel>
+                <Input id="project-website-url" name="website_url" maxLength={300} inputMode="url" placeholder="https://example.com" />
+              </Field>
+            </FieldGroup>
+            <Button type="submit">Create Project</Button>
+          </form>
+          <p id="form-message" class="mt-4 text-sm text-muted-foreground" role="status"></p>
+        </FormSection>
+      ) : (
+        <FormSection title="View-only access" description="Workspace Members can view Projects but cannot create them." />
+      )
+    }
+
+    <Card>
+      <CardHeader>
+        <CardTitle>Project list</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {
+          projectsPayload.data.length === 0 ? (
+            <EmptyState title="No Project yet" description="Create Project before adding Database Sources." />
+          ) : (
+            <ul class="grid gap-3">
+              {projectsPayload.data.map((project) => (
+                <li class="flex items-center justify-between gap-4 rounded-lg border p-3">
+                  <div class="min-w-0">
+                    <a class="font-medium hover:underline" href={`/workspace/${workspace.slug}/projects/${project.id}`}>
+                      {project.name}
+                    </a>
+                    {project.website_url ? <p class="truncate text-sm text-muted-foreground">{project.website_url}</p> : <p class="text-sm text-muted-foreground">No website URL</p>}
+                  </div>
+                  <Button asChild variant="outline"><a href={`/workspace/${workspace.slug}/projects/${project.id}`}>Open</a></Button>
+                </li>
+              ))}
+            </ul>
+          )
+        }
+      </CardContent>
+    </Card>
+  </section>
+</DashboardShell>
+
+<script is:inline define:vars={{ apiBaseUrl: API_BASE_URL, workspaceId: workspace.id }}>
+  const form = document.getElementById('project-form');
+  const message = document.getElementById('form-message');
+
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    message.textContent = 'Creating Project...';
+    message.classList.remove('text-destructive');
+
+    const formData = new FormData(form);
+    const body = {
+      name: String(formData.get('name') ?? ''),
+      website_url: String(formData.get('website_url') ?? '') || undefined,
+    };
+
+    const response = await fetch(`${apiBaseUrl}/v1/workspaces/${workspaceId}/projects`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    const payload = await response.json();
+    if (!response.ok) {
+      message.textContent = payload.error?.message ?? 'Project could not be created';
+      message.classList.add('text-destructive');
+      return;
+    }
+
+    window.location.reload();
+  });
+</script>

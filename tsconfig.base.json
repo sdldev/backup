@@ -1,29 +1,22 @@
 {
-  "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@mba/shared": ["packages/shared/src/index.ts"],
-      "@mba/security": ["packages/security/src/index.ts"],
-      "@mba/db": ["packages/db/src/index.ts"],
-      "@mba/storage": ["packages/storage/src/index.ts"],
-      "@mba/engine-adapters": ["packages/engine-adapters/src/index.ts"],
-      "@mba/web/*": ["apps/web/src/*"]
-    },
     "target": "ES2022",
+    "lib": ["ES2022"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "lib": ["ES2022"],
-    "types": ["bun"],
-
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
-
+    "skipLibCheck": true,
     "declaration": true,
-    "declarationMap": true,
     "sourceMap": true,
-
-    "skipLibCheck": true
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "types": ["bun"],
+    "paths": {
+      "@backup-saas/shared": ["./packages/shared/src/index.ts"],
+      "@backup-saas/shared/*": ["./packages/shared/src/*"]
+    }
   }
 }

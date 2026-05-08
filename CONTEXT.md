@@ -12,7 +12,7 @@ A Project is a website, app, or client asset inside a Workspace. A Project group
 
 ### Backup
 
-A Backup is an app-encrypted logical database dump created from a Database Source. The backup pipeline is dump, optionally compress, encrypt, then store. In v1, the product creates, stores, lists, and downloads Backups, but does not restore them into a database. MySQL Backups download as `.sql.gz`; PostgreSQL Backups download as custom-format `.dump` or `.dump.gz` files.
+A Backup is an app-encrypted logical database dump created from a Database Source. The backup pipeline is dump, optionally compress, encrypt, then store. In v1, the product creates, stores, lists, and downloads Backups, but does not restore them into a database. MySQL Backups download as `.sql.gz`; PostgreSQL Backups download as custom-format `.dump` files (`pg_dump -Fc` includes built-in compression).
 
 ### Backup Encryption Key
 
@@ -56,7 +56,7 @@ A Retention Period is the amount of time Backup files for a Database Source are 
 
 ### Schedule
 
-A Schedule defines how often a Database Source should be backed up automatically. In v1, a Schedule is set per Database Source, uses preset daily frequencies from 1 to 5 Backups per day, is bounded by the Workspace Plan, and follows the Workspace timezone.
+A Schedule defines how often a Database Source should be backed up automatically. Scheduled backups are planned for **Phase 2**. When implemented, a Schedule will be set per Database Source, use preset daily frequencies from 1 to 5 Backups per day, be bounded by the Workspace Plan, and follow the Workspace timezone. Phase 1 (first release) supports manual backups only.
 
 ### Workspace Role
 
@@ -68,11 +68,11 @@ A Database Credential is the secret connection information needed to create Back
 
 ### Workspace Plan
 
-A Workspace Plan defines the usage limits for a Workspace. v1 limits include Database Source count, retained storage size, Retention Period, Schedule frequency, and Workspace member count.
+A Workspace Plan defines the usage limits for a Workspace. Phase 1 limits include Database Source count, retained storage size, Retention Period, manual Backup rate limits, and Workspace member count. Schedule frequency limits will be added in Phase 2 when scheduled backups are introduced.
 
 ### Backup Notification
 
-A Backup Notification informs a Workspace about important backup-related events. In v1, Backup Notifications are sent by email and webhook for failed Backups, recovery after failure, and storage nearing the Workspace Plan limit.
+A Backup Notification informs a Workspace about important backup-related events. Backup Notifications are **not included in Phase 1**. Email notifications for failed Backups, recovery after failure, and storage nearing the Workspace Plan limit are planned for **Phase 2**. Webhook notifications are planned for **Phase 3**.
 
 ### Audit Log
 
@@ -88,7 +88,7 @@ New Tenant Onboarding is the workflow where a signed-in User Account creates a W
 
 ### Backup Status
 
-A Backup Status describes the lifecycle state of a Backup. v1 statuses are Queued, Running, Succeeded, Failed, Cancelled, Deleted, and Expired.
+A Backup Status describes the lifecycle state of a Backup artifact. Phase 1 Backup artifact statuses are Succeeded, Deleted, and Expired. Backup Job statuses (the execution attempt) are Queued, Running, Succeeded, Failed, and Cancelled. Backup Job and Backup artifact are separate records.
 
 ### Data Model
 

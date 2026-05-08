@@ -1,0 +1,16 @@
+---
+const { status, label = status } = Astro.props as { status: string; label?: string };
+const normalized = status.toLowerCase().replaceAll('-', '_');
+const variant = ['ready', 'succeeded', 'success'].includes(normalized)
+  ? 'success'
+  : ['failed', 'needs_action', 'error', 'cancelled'].includes(normalized)
+    ? 'warning'
+    : 'default';
+const classes = {
+  success: 'border-transparent bg-emerald-500 text-white dark:bg-emerald-600',
+  warning: 'border-transparent bg-amber-500 text-white dark:bg-amber-600',
+  default: 'border-border bg-secondary text-secondary-foreground',
+}[variant];
+---
+
+<span class={`inline-flex w-fit items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold capitalize ${classes}`}>{label}</span>

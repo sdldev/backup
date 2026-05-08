@@ -1,0 +1,97 @@
+---
+import DashboardShell from '../../../components/DashboardShell.astro';
+import { buildWorkspaceNavGroups } from '../../../lib/dashboard-nav';
+import StatCard from '../../../components/dashboard/StatCard.astro';
+import StatusBadge from '../../../components/dashboard/StatusBadge.astro';
+import { Button } from '../../../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
+import { apiFetch } from '../../../lib/api';
+
+const { workspaceSlug } = Astro.params;
+const response = await apiFetch(`/v1/workspaces/by-slug/${workspaceSlug}`, Astro.request);
+
+if (response.status === 401) return Astro.redirect('/login');
+if (response.status === 404) return Astro.redirect('/app');
+if (!response.ok) return Astro.redirect('/login?error=load_failed');
+
+const payload = (await response.json()) as {
+  data: {
+    workspace: { id: string; name: string; slug: string; storage_status: string; onboarding_step: string };
+    membership: { role: string };
+    plan: { name: string };
+  };
+};
+
+const { workspace, membership, plan } = payload.data;
+const storageReady = workspace.storage_status === 'ready';
+---
+
+<DashboardShell brandLabel="Workspace" brandName={workspace.name} pageTitle={workspace.name} sidebarNote={`${membership.role} · ${plan.name}`} navGroups={buildWorkspaceNavGroups(workspace.slug, Astro.url.pathname)}>
+  <section class="grid gap-5">
+    <div class="dashboard-hero rounded-2xl border p-8 shadow-xl shadow-slate-950/10 md:p-10">
+      <div class="relative z-10 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+        <div class="max-w-2xl">
+          <p class="text-sm font-medium text-primary-foreground/75">Manual Backup dashboard</p>
+          <h2 class="mt-4 text-3xl font-semibold tracking-tight md:text-4xl">{workspace.name}</h2>
+          <p class="mt-4 text-sm leading-6 text-primary-foreground/75">Monitor Backup Storage readiness, New Tenant Onboarding progress, and next actions for encrypted manual Backups.</p>
+        </div>
+        <div class="relative z-10 flex flex-wrap gap-2">
+          <Button asChild variant="secondary"><a href="/app">Switch Workspace</a></Button>
+          <Button asChild><a href={`/workspace/${workspace.slug}/projects`}>Manage Projects</a></Button>
+        </div>
+      </div>
+    </div>
+
+    <section class="grid gap-4 md:grid-cols-3" aria-label="Workspace health">
+      <StatCard label="Storage" value={workspace.storage_status}>
+        <StatusBadge status={storageReady ? 'ready' : 'needs_action'} label={storageReady ? 'Ready' : 'Needs action'} />
+      </StatCard>
+      <StatCard label="Plan" value={plan.name}>
+        <p class="text-xs text-muted-foreground">Workspace Plan limits apply</p>
+      </StatCard>
+      <StatCard label="Role" value={membership.role}>
+        <p class="text-xs text-muted-foreground">Workspace Role</p>
+      </StatCard>
+    </section>
+
+    <section class="grid gap-4 lg:grid-cols-[1.35fr_0.65fr]">
+      <Card className="bg-card/95 backdrop-blur ">
+        <CardHeader>
+          <CardTitle>Backup operations</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <p class="text-sm leading-6 text-muted-foreground">Setup progress, last Backup status, storage usage, and active Database Source count will appear here as operational metrics land.</p>
+          <div class="grid gap-3 md:grid-cols-3">
+            <div class="rounded-lg border bg-background/70 p-3">
+              <p class="text-xs text-muted-foreground">Setup progress</p>
+              <p class="mt-1 font-semibold">{workspace.onboarding_step}</p>
+            </div>
+            <div class="rounded-lg border bg-background/70 p-3">
+              <p class="text-xs text-muted-foreground">Storage usage</p>
+              <p class="mt-1 font-semibold">Coming soon</p>
+            </div>
+            <div class="rounded-lg border bg-background/70 p-3">
+              <p class="text-xs text-muted-foreground">Last Backup</p>
+              <p class="mt-1 font-semibold">Coming soon</p>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <Button asChild><a href={`/workspace/${workspace.slug}/projects`}>Add Database Source</a></Button>
+            <Button asChild variant="outline"><a href={`/workspace/${workspace.slug}/backups`}>View Backups</a></Button>
+          </div>
+        </CardContent>
+      </Card>
+      <Card className="bg-card/95 backdrop-blur ">
+        <CardHeader><CardTitle>Next actions</CardTitle></CardHeader>
+        <CardContent>
+          <ul class="grid gap-2 text-sm text-muted-foreground">
+            <li class="rounded-lg border bg-background/70 p-3"><a class="font-medium text-foreground hover:underline" href={`/workspace/${workspace.slug}/projects`}>Create Project</a></li>
+            <li class="rounded-lg border bg-background/70 p-3">Add Database Source</li>
+            <li class="rounded-lg border bg-background/70 p-3">Run first manual Backup <span class="rounded-md bg-muted px-2 py-0.5 text-xs">Coming soon</span></li>
+            <li class="rounded-lg border bg-background/70 p-3"><a class="font-medium text-foreground hover:underline" href={`/workspace/${workspace.slug}/settings/audit-log`}>Review Audit Log</a></li>
+          </ul>
+        </CardContent>
+      </Card>
+    </section>
+  </section>
+</DashboardShell>

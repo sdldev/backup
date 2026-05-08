@@ -1,0 +1,105 @@
+---
+import DataTable from '../../components/dashboard/DataTable.astro';
+import DashboardShell from '../../components/DashboardShell.astro';
+import { Button } from '../../components/ui/button';
+import { apiFetch } from '../../lib/api';
+import { buildAppNavGroups } from '../../lib/dashboard-nav';
+
+const response = await apiFetch('/v1/workspaces', Astro.request);
+
+if (response.status === 401) return Astro.redirect('/login');
+if (response.status === 503) return Astro.redirect('/login?error=api_unavailable');
+if (!response.ok) return Astro.redirect('/login?error=workspace_load_failed');
+
+const payload = (await response.json()) as {
+  data: Array<{
+    workspace: { id: string; name: string; slug: string; storage_status: string; onboarding_step: string };
+    membership: { role: string };
+    plan: { slug: string; name: string };
+  }>;
+};
+
+const hasRealWorkspaces = payload.data.length > 0;
+const sampleWorkspaceRows = [
+  { name: 'Agency Production', slug: 'agency-production', plan: 'Basic', role: 'owner', storageStatus: 'ready', onboardingStep: 'storage_ready', href: '/app/new-workspace', label: 'Sample' },
+  { name: 'Client Commerce', slug: 'client-commerce', plan: 'Basic', role: 'admin', storageStatus: 'pending', onboardingStep: 'project_pending', href: '/app/new-workspace', label: 'Demo' },
+  { name: 'Postgres Reporting', slug: 'postgres-reporting', plan: 'Basic', role: 'member', storageStatus: 'pending', onboardingStep: 'backup_pending', href: '/app/new-workspace', label: 'Sample' },
+];
+const workspaceRows = hasRealWorkspaces
+  ? payload.data.map((item) => ({
+      name: item.workspace.name,
+      slug: item.workspace.slug,
+      plan: item.plan.name,
+      role: item.membership.role,
+      storageStatus: item.workspace.storage_status,
+      onboardingStep: item.workspace.onboarding_step,
+      href: `/workspace/${item.workspace.slug}`,
+      label: 'Live',
+    }))
+  : sampleWorkspaceRows;
+---
+
+<DashboardShell
+  brandLabel="Manual Backup"
+  brandName="Portal"
+  pageTitle="Workspaces"
+  sidebarNote=""
+  navGroups={buildAppNavGroups(Astro.url.pathname)}
+>
+  <section class="grid gap-5">
+    <div class="dashboard-hero rounded-2xl border p-8 shadow-xl shadow-slate-950/10 md:p-10">
+      <div class="relative z-10 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+        <div class="max-w-2xl">
+          <p class="text-sm font-medium text-primary-foreground/75">Workspace directory</p>
+          <h2 class="mt-4 text-3xl font-semibold tracking-tight md:text-4xl">Workspaces</h2>
+          <p class="mt-4 text-sm leading-6 text-primary-foreground/75">Pilih Workspace untuk masuk ke dashboard tenant dan lanjutkan setup manual Backup.</p>
+        </div>
+        <Button asChild variant="secondary"><a href="/app/new-workspace">Create Workspace</a></Button>
+      </div>
+    </div>
+
+    <section class="rounded-2xl border bg-card/95 p-5 shadow-sm backdrop-blur " aria-labelledby="workspaces-title">
+      <div class="mb-5">
+        <h2 id="workspaces-title" class="text-lg font-semibold tracking-tight">Workspace list</h2>
+        <p class="text-sm text-muted-foreground">
+          {hasRealWorkspaces ? 'Daftar Workspace aktif untuk akun ini.' : 'Sample data shown — create a Workspace to replace it.'}
+        </p>
+      </div>
+
+      <DataTable caption={!hasRealWorkspaces ? 'Sample Workspace rows. Create a Workspace to show live data.' : undefined}>
+        <tr slot="head" class="text-left text-xs uppercase tracking-wide text-muted-foreground">
+          <th class="px-4 py-3 font-medium">Workspace</th>
+          <th class="px-4 py-3 font-medium">Plan</th>
+          <th class="px-4 py-3 font-medium">Role</th>
+          <th class="px-4 py-3 font-medium">Storage</th>
+          <th class="px-4 py-3 font-medium">Onboarding</th>
+          <th class="px-4 py-3 text-right font-medium">Action</th>
+        </tr>
+        {workspaceRows.map((row) => (
+          <tr class="transition-colors hover:bg-muted/35">
+            <td class="px-4 py-4">
+              <div class="flex flex-col gap-1">
+                <div class="flex flex-wrap items-center gap-2">
+                  <a class="font-semibold hover:underline" href={row.href}>{row.name}</a>
+                  <span class="rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">{row.label}</span>
+                </div>
+                <span class="text-xs text-muted-foreground">/{row.slug}</span>
+              </div>
+            </td>
+            <td class="px-4 py-4 text-muted-foreground">{row.plan}</td>
+            <td class="px-4 py-4 capitalize text-muted-foreground">{row.role}</td>
+            <td class="px-4 py-4">
+              <span class={`rounded-md px-2 py-1 text-xs font-medium bg-secondary text-secondary-foreground`}>
+                {row.storageStatus}
+              </span>
+            </td>
+            <td class="px-4 py-4 text-muted-foreground">{row.onboardingStep}</td>
+            <td class="px-4 py-4 text-right">
+              <a class="text-sm font-medium text-primary hover:underline" href={row.href}>{hasRealWorkspaces ? 'Open' : 'Create'}</a>
+            </td>
+          </tr>
+        ))}
+      </DataTable>
+    </section>
+  </section>
+</DashboardShell>

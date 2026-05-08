@@ -1,0 +1,15 @@
+---
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+
+const { label, value } = Astro.props as { label: string; value: string | number };
+---
+
+<Card className="bg-card/95 shadow-sm backdrop-blur">
+  <CardHeader className="pb-2">
+    <CardTitle className="text-sm font-medium text-muted-foreground">{label}</CardTitle>
+  </CardHeader>
+  <CardContent className="grid gap-2">
+    <span class="text-3xl font-semibold leading-none tracking-tight">{value}</span>
+    <slot />
+  </CardContent>
+</Card>

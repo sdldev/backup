@@ -4,6 +4,44 @@ All application API routes are versioned under `/v1`.
 
 Workspace-scoped routes use Workspace ID, not slug. Web URLs may use Workspace slug.
 
+## Health Check
+
+Public endpoints, no authentication required.
+
+Routes:
+
+- `GET /v1/health` — returns `{ "status": "ok", "version": "1.0.0" }` for uptime monitors
+- `GET /v1/health/ready` — checks database and storage connectivity, returns `503` if unavailable
+- `GET /v1/health/live` — simple liveness check, returns `200` if process running
+
+## API Conventions
+
+### Error Response Format
+
+All error responses use a consistent JSON format:
+
+```json
+{
+  "error": {
+    "code": "RESOURCE_NOT_FOUND",
+    "message": "Database Source not found",
+    "reference": "err_abc123"
+  }
+}
+```
+
+Error codes use `UPPER_SNAKE_CASE` domain-scoped names (e.g., `AUTH_EMAIL_NOT_VERIFIED`, `WORKSPACE_SLUG_TAKEN`, `BACKUP_STORAGE_FULL`).
+
+### Pagination
+
+All list endpoints use cursor-based pagination:
+
+- Default page size: 25
+- Maximum page size: 100
+- Query parameters: `?cursor=`, `?limit=`, `?sort=created_at:desc`
+- Response: `{ "data": [...], "pagination": { "next_cursor": "...", "has_more": true } }`
+- Default sort: `created_at DESC`
+
 ## Auth and session
 
 API owns auth, OAuth callbacks, and session cookies.
@@ -50,6 +88,14 @@ Create behavior:
 - If `requested_plan` is Pro or Agency, creates a pending plan request.
 - Triggers async platform-managed Backup Storage provisioning.
 - Returns Workspace with `storage_status: provisioning`.
+
+Slug rules:
+
+- Format: `[a-z0-9-]+`, 3-48 characters.
+- Globally unique across all Workspaces.
+- Auto-generated from name if absent, with dedup suffix if taken.
+- HTTP 409 with code `WORKSPACE_SLUG_TAKEN` if slug is already in use.
+- Reserved slugs: `admin`, `api`, `auth`, `login`, `logout`, `settings`, `system`, `health`, `status`, `support`, `billing`, `invite`, `download`, `downloads`, `workspace`, `workspaces`, `v1`.
 
 Storage provisioning retry rules:
 

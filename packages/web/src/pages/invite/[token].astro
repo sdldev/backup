@@ -1,0 +1,87 @@
+---
+import { ThemeToggle } from '../../components/theme/ThemeToggle';
+import { Button } from '../../components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { apiFetch } from '../../lib/api';
+
+const { token } = Astro.params;
+const previewResponse = await apiFetch(`/v1/invites/${token}`, Astro.request);
+
+type InvitePreview = { workspace: { name: string; slug: string }; role: string; email: string; expires_at: string };
+let preview: InvitePreview | null = null;
+let error = '';
+
+if (previewResponse.ok) {
+  const payload = (await previewResponse.json()) as { data: InvitePreview };
+  preview = payload.data;
+} else if (previewResponse.status === 404) {
+  error = 'Invite link is invalid, expired, or already used.';
+} else {
+  throw new Error('Failed to load invite');
+}
+---
+
+<BaseLayout title="Workspace Invite">
+  <main class="grid min-h-screen place-items-center bg-background px-6 py-10 text-foreground">
+    <div class="absolute right-6 top-6">
+      <ThemeToggle client:load />
+    </div>
+
+    <Card className="w-full max-w-xl">
+      <CardHeader className="space-y-3">
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Workspace invite</p>
+        {error ? (
+          <>
+            <CardTitle className="text-3xl">Invite unavailable</CardTitle>
+            <CardDescription className="text-base leading-7">{error}</CardDescription>
+          </>
+        ) : preview ? (
+          <>
+            <CardTitle className="text-3xl">Join {(preview as InvitePreview).workspace.name}</CardTitle>
+            <CardDescription className="text-base leading-7">
+              You were invited as <strong>{(preview as InvitePreview).role}</strong> for <strong>{(preview as InvitePreview).email}</strong>.
+            </CardDescription>
+          </>
+        ) : null}
+      </CardHeader>
+      <CardContent className="grid gap-4">
+        {error ? (
+          <Button asChild variant="outline">
+            <a href="/app">Go to app</a>
+          </Button>
+        ) : preview ? (
+          <>
+            <p class="text-sm text-muted-foreground">Expires {(preview as InvitePreview).expires_at}</p>
+            <form class="grid gap-3" data-accept-invite data-token={token}>
+              <Button type="submit">Accept invite</Button>
+              <p class="text-sm text-muted-foreground" data-status></p>
+            </form>
+            <p class="text-sm text-muted-foreground">You must be signed in with the invited email before accepting.</p>
+          </>
+        ) : null}
+      </CardContent>
+    </Card>
+  </main>
+  <script>
+    const form = document.querySelector('[data-accept-invite]');
+    form?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const token = form.getAttribute('data-token');
+      const status = form.querySelector('[data-status]');
+      if (status) status.textContent = 'Accepting invite...';
+      const response = await fetch(`/v1/invites/${token}/accept`, { method: 'POST', credentials: 'include' });
+      if (response.status === 401) {
+        window.location.href = `/login?return_to=${encodeURIComponent(window.location.pathname)}`;
+        return;
+      }
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        if (status) status.textContent = payload?.error?.message ?? 'Invite could not be accepted.';
+        return;
+      }
+      const payload = await response.json();
+      window.location.href = `/workspace/${payload.data.workspace_slug}`;
+    });
+  </script>
+</BaseLayout>

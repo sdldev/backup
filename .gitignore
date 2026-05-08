@@ -1,19 +1,9 @@
 node_modules/
-dist/
 .astro/
-
-# local env
+.astro-cache/
+dist/
 .env
-.env.*
-!.env.example
-
-# evidence (never commit)
-.sisyphus/
-.sisyphus/evidence/
-test-results/
-
-# generated backup artifacts (never commit)
-**/*.sql
-**/*.sql.gz
-**/*.dump
-**/*.dump.gz
+.storage/
+.scratch/
+.DS_Store
+.playwright-cli/

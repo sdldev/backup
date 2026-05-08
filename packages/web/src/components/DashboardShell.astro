@@ -1,0 +1,29 @@
+---
+import '../styles/globals.css';
+import { API_BASE_URL } from '../lib/api';
+import DashboardFrame from './dashboard/DashboardFrame';
+
+import type { DashboardNavGroup, DashboardNavItem } from '../lib/dashboard-nav';
+
+const { brandLabel, brandName, navItems = [], navGroups, sidebarNote, pageTitle = 'Dashboard' } = Astro.props as {
+  brandLabel: string;
+  brandName: string;
+  navItems?: DashboardNavItem[];
+  navGroups?: DashboardNavGroup[];
+  sidebarNote: string;
+  pageTitle?: string;
+};
+---
+
+<DashboardFrame brandLabel={brandLabel} brandName={brandName} navItems={navItems} navGroups={navGroups} sidebarNote={sidebarNote} pageTitle={pageTitle} client:load>
+  <slot />
+</DashboardFrame>
+
+<script is:inline define:vars={{ apiBaseUrl: API_BASE_URL }}>
+  document.addEventListener('click', async (event) => {
+    const button = event.target?.closest?.('[data-logout]');
+    if (!button) return;
+    await fetch(`${apiBaseUrl}/v1/auth/logout`, { method: 'POST', credentials: 'include' });
+    window.location.href = '/login';
+  });
+</script>

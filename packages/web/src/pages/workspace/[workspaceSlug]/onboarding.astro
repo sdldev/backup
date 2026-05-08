@@ -1,0 +1,103 @@
+---
+import DashboardShell from '../../../components/DashboardShell.astro';
+import { buildWorkspaceNavGroups } from '../../../lib/dashboard-nav';
+import PageHeader from '../../../components/dashboard/PageHeader.astro';
+import StatCard from '../../../components/dashboard/StatCard.astro';
+import StatusBadge from '../../../components/dashboard/StatusBadge.astro';
+import { Button } from '../../../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
+import { apiFetch, API_BASE_URL } from '../../../lib/api';
+
+const { workspaceSlug } = Astro.params;
+const response = await apiFetch(`/v1/workspaces/by-slug/${workspaceSlug}`, Astro.request);
+
+if (response.status === 401) return Astro.redirect('/login');
+if (response.status === 404) return Astro.redirect('/app');
+if (!response.ok) return Astro.redirect('/login?error=load_failed');
+
+const payload = (await response.json()) as {
+  data: {
+    workspace: { id: string; name: string; slug: string; storage_status: string; onboarding_step: string };
+    membership: { role: string };
+    plan: { name: string };
+  };
+};
+
+const { workspace, membership, plan } = payload.data;
+const storageReady = workspace.storage_status === 'ready';
+const checklist = [
+  { label: 'Workspace created', done: true },
+  { label: 'Backup Storage provisioned', done: storageReady },
+  { label: 'Project created', done: false, href: `/workspace/${workspace.slug}/projects` },
+  { label: 'Database Source added', done: false },
+  { label: 'Connection tested', done: false },
+  { label: 'First Backup succeeded', done: false },
+  { label: 'Team invite optional', done: false },
+];
+const completedCount = checklist.filter((item) => item.done).length;
+---
+
+<DashboardShell brandLabel="Workspace" brandName={workspace.name} pageTitle="Onboarding" sidebarNote={`${membership.role} · ${plan.name}`} navGroups={buildWorkspaceNavGroups(workspace.slug, Astro.url.pathname)}>
+  <PageHeader eyebrow="Onboarding checklist" title={workspace.name} description="Prepare Workspace for encrypted manual Backups. Scheduled Backups are Phase 2.">
+    <Button slot="actions" asChild variant="outline"><a href={`/workspace/${workspace.slug}/projects`}>Projects</a></Button>
+    <Button slot="actions" type="button" id="retry-storage">Provision / retry Storage</Button>
+  </PageHeader>
+
+  <section class="grid gap-4 md:grid-cols-3" aria-label="Onboarding summary">
+    <StatCard label="Progress" value={`${completedCount} / ${checklist.length}`} />
+    <StatCard label="Current Step" value={workspace.onboarding_step} />
+    <StatCard label="Backup Storage" value={workspace.storage_status}>
+      <StatusBadge status={storageReady ? 'ready' : 'needs_action'} label={storageReady ? 'Ready' : 'Needs action'} />
+    </StatCard>
+  </section>
+
+  <section class="mt-6 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+    <Card>
+      <CardHeader><CardTitle>Setup checklist</CardTitle></CardHeader>
+      <CardContent>
+        <ol class="grid gap-3">
+          {checklist.map((item) => (
+            <li class="flex items-center justify-between gap-4 rounded-lg border p-3">
+              <div>
+                <strong class="text-sm">{item.href ? <a class="hover:underline" href={item.href}>{item.label}</a> : item.label}</strong>
+                <p class="text-sm text-muted-foreground">{item.done ? 'Completed' : 'Pending'}</p>
+              </div>
+              <StatusBadge status={item.done ? 'ready' : 'needs_action'} label={item.done ? 'Done' : 'Pending'} />
+            </li>
+          ))}
+        </ol>
+      </CardContent>
+    </Card>
+
+    <Card className="bg-muted/30">
+      <CardHeader><CardTitle>Storage provisioning</CardTitle></CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        <p class="text-sm leading-6 text-muted-foreground">Backup Jobs are blocked until current Backup Storage config is active.</p>
+        <p class="text-sm text-muted-foreground" id="storage-message" role="status"></p>
+        <Button type="button" id="retry-storage-secondary">Provision / retry Backup Storage</Button>
+      </CardContent>
+    </Card>
+  </section>
+</DashboardShell>
+
+<script is:inline define:vars={{ apiBaseUrl: API_BASE_URL, workspaceId: payload.data.workspace.id }}>
+  const buttons = [document.getElementById('retry-storage'), document.getElementById('retry-storage-secondary')].filter(Boolean);
+  const message = document.getElementById('storage-message');
+
+  buttons.forEach((button) => {
+    button.addEventListener('click', async () => {
+      message.textContent = 'Provisioning Backup Storage...';
+      message.classList.remove('text-destructive');
+      const response = await fetch(`${apiBaseUrl}/v1/workspaces/${workspaceId}/storage/provision/retry`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      const payload = await response.json();
+      message.textContent = response.ok
+        ? `Backup Storage ${payload.data.workspace.storage_status}`
+        : payload.error?.message ?? 'Backup Storage provisioning failed';
+      if (!response.ok) message.classList.add('text-destructive');
+      if (response.ok) window.location.reload();
+    });
+  });
+</script>

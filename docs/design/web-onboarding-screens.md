@@ -11,7 +11,10 @@
 - `/workspace/:workspaceSlug/projects/:projectId` — Project detail
 - `/workspace/:workspaceSlug/sources/:sourceId` — Database Source detail
 - `/workspace/:workspaceSlug/backup-jobs/:jobId` — Backup Job detail and live progress
-- `/workspace/:workspaceSlug/settings/*` — Workspace settings
+- `/workspace/:workspaceSlug/settings` — Workspace settings
+- `/workspace/:workspaceSlug/settings/audit-log` — Workspace audit log viewer
+- `/workspace/:workspaceSlug/settings/members` — Team management
+- `/workspace/:workspaceSlug/settings/plan` — Plan management
 - `/invite/:token` — invite preview and acceptance
 
 ## Login redirect

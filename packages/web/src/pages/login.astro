@@ -1,0 +1,37 @@
+---
+import { ThemeToggle } from '../components/theme/ThemeToggle';
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
+---
+
+<BaseLayout title="Sign in">
+  <main class="grid min-h-screen place-items-center bg-background px-6 py-10 text-foreground">
+    <div class="absolute right-6 top-6">
+      <ThemeToggle client:load />
+    </div>
+
+    <Card className="w-full max-w-xl">
+      <CardHeader className="space-y-3">
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Manual Backup SaaS Beta</p>
+        <CardTitle className="text-3xl">Sign in</CardTitle>
+        <CardDescription className="text-base leading-7">
+          Use verified Google or GitHub email to access Workspaces, Projects, Database Sources, Backups, and Audit Logs.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-4">
+        <div class="grid gap-3">
+          <Button asChild>
+            <a href={`${apiBaseUrl}/v1/auth/google/start`}>Continue with Google</a>
+          </Button>
+          <Button asChild variant="outline">
+            <a href={`${apiBaseUrl}/v1/auth/github/start`}>Continue with GitHub</a>
+          </Button>
+        </div>
+        <p class="text-sm text-muted-foreground">Email/password sign-in is not supported in Phase 1.</p>
+      </CardContent>
+    </Card>
+  </main>
+</BaseLayout>

@@ -8,7 +8,7 @@ Included:
 
 - Google and GitHub OAuth sign-in only
 - HTTP-only secure sessions stored in Postgres
-- Astro hybrid web app
+- Astro web app with `output: 'server'` mode (per-page `prerender` for static pages)
 - ElysiaJS API on Bun
 - Bun worker process
 - Postgres application database via Drizzle

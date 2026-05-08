@@ -1,0 +1,74 @@
+---
+import type { DashboardNavGroup, DashboardNavItem } from '../../lib/dashboard-nav';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarRail,
+} from '../ui/sidebar';
+import { Button } from '../ui/button';
+
+const { brandLabel, brandName, navItems = [], navGroups, sidebarNote } = Astro.props as {
+  brandLabel: string;
+  brandName: string;
+  navItems?: DashboardNavItem[];
+  navGroups?: DashboardNavGroup[];
+  sidebarNote: string;
+};
+
+const groups = navGroups ?? [{ id: 'dashboard', label: 'Dashboard', items: navItems }];
+---
+
+<Sidebar collapsible="icon">
+  <SidebarHeader>
+    <SidebarMenu>
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild size="lg">
+          <a href="/app">
+            <span class="flex size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground" aria-hidden="true">
+              <span class="size-3 rotate-45 rounded-sm border border-current/40 bg-current/15"></span>
+            </span>
+            <span class="grid min-w-0 flex-1 text-left leading-tight">
+              <span class="truncate text-[10px] font-semibold uppercase tracking-[0.18em] text-sidebar-foreground/60">{brandLabel}</span>
+              <span class="truncate text-sm font-semibold">{brandName}</span>
+            </span>
+          </a>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    </SidebarMenu>
+  </SidebarHeader>
+
+  <SidebarContent>
+    {groups.map((group) => (
+      <SidebarGroup>
+        <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            {group.items.map((item) => (
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={item.active}>
+                  <a href={item.href}><span>{item.label}</span></a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+    ))}
+  </SidebarContent>
+
+  <SidebarFooter>
+    <p class="rounded-lg border border-sidebar-border bg-sidebar-accent/40 p-3 text-xs leading-5 text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden">{sidebarNote}</p>
+    <Button className="justify-start" variant="ghost" type="button" data-logout>
+      Logout
+    </Button>
+  </SidebarFooter>
+  <SidebarRail />
+</Sidebar>

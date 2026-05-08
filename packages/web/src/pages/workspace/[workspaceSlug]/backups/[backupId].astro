@@ -1,0 +1,97 @@
+---
+import DashboardShell from '../../../../components/DashboardShell.astro';
+import PageHeader from '../../../../components/dashboard/PageHeader.astro';
+import StatCard from '../../../../components/dashboard/StatCard.astro';
+import { Badge } from '../../../../components/ui/badge';
+import { Button } from '../../../../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../../components/ui/card';
+import { buildWorkspaceNavGroups } from '../../../../lib/dashboard-nav';
+import { API_BASE_URL, apiFetch } from '../../../../lib/api';
+
+const { workspaceSlug, backupId } = Astro.params;
+const workspaceResponse = await apiFetch(`/v1/workspaces/by-slug/${workspaceSlug}`, Astro.request);
+if (workspaceResponse.status === 401) return Astro.redirect('/login');
+if (workspaceResponse.status === 404) return Astro.redirect('/app');
+if (!workspaceResponse.ok) return Astro.redirect('/login?error=load_failed');
+const workspacePayload = (await workspaceResponse.json()) as { data: { workspace: { id: string; name: string; slug: string }; membership: { role: string } } };
+const { workspace, membership } = workspacePayload.data;
+const backupResponse = await apiFetch(`/v1/workspaces/${workspace.id}/backups/${backupId}`, Astro.request);
+if (backupResponse.status === 404) return Astro.redirect(`/workspace/${workspace.slug}/backups`);
+if (!backupResponse.ok) return Astro.redirect('/login?error=load_failed');
+const backupPayload = (await backupResponse.json()) as { data: { id: string; status: string; format: string; download_filename: string; encrypted_size_bytes: number; original_size_bytes: number | null; retention_expires_at: string; created_at: string } };
+const backup = backupPayload.data;
+const canDelete = membership.role === 'owner' || membership.role === 'admin';
+const formatBytes = (bytes: number | null) => (bytes === null ? 'Unknown' : new Intl.NumberFormat('en', { notation: 'compact' }).format(bytes) + ' B');
+---
+
+<DashboardShell brandLabel="Workspace" brandName={workspace.name} pageTitle="Backup detail" sidebarNote={`${membership.role} · Backup detail`} navGroups={buildWorkspaceNavGroups(workspace.slug, Astro.url.pathname)}>
+  <PageHeader eyebrow="Backup detail" title={backup.download_filename} description="Download uses a short-lived, session-bound, single-use token.">
+    <Button slot="actions" asChild variant="outline"><a href={`/workspace/${workspace.slug}/backups`}>All Backups</a></Button>
+    <Button slot="actions" type="button" id="download-backup" disabled={backup.status !== 'succeeded'}>Download</Button>
+    <Button slot="actions" type="button" id="delete-backup" variant="destructive" disabled={!canDelete || backup.status !== 'succeeded'}>Delete</Button>
+  </PageHeader>
+  <section class="grid gap-4 md:grid-cols-3" aria-label="Backup summary">
+    <StatCard label="Status" value={backup.status}><Badge variant="secondary">{backup.status}</Badge></StatCard>
+    <StatCard label="Encrypted Size" value={formatBytes(backup.encrypted_size_bytes)} />
+    <StatCard label="Original Size" value={formatBytes(backup.original_size_bytes)} />
+  </section>
+  <section class="mt-6 grid gap-4 lg:grid-cols-2">
+    <Card>
+      <CardHeader><CardTitle>Artifact metadata</CardTitle></CardHeader>
+      <CardContent>
+        <dl class="detail-list">
+          <dt>Format</dt><dd>{backup.format}</dd>
+          <dt>Retention expires</dt><dd>{backup.retention_expires_at}</dd>
+          <dt>Created</dt><dd>{backup.created_at}</dd>
+          <dt>Backup ID</dt><dd>{backup.id}</dd>
+        </dl>
+        <p id="download-message" class="mt-4 text-sm text-muted-foreground" role="status"></p>
+      </CardContent>
+    </Card>
+    <Card className="bg-muted/30">
+      <CardHeader><CardTitle>Security notes</CardTitle></CardHeader>
+      <CardContent>
+        <ul class="grid gap-3 text-sm">
+          <li class="rounded-lg border p-3">Object key and checksum are not exposed in UI.</li>
+          <li class="rounded-lg border p-3">Download token expires in 15 minutes.</li>
+          <li class="rounded-lg border p-3">Download token is bound to current User Account and session.</li>
+          <li class="rounded-lg border p-3">Backup delete is Owner/Admin only.</li>
+        </ul>
+      </CardContent>
+    </Card>
+  </section>
+</DashboardShell>
+
+<script is:inline define:vars={{ apiBaseUrl: API_BASE_URL, workspaceId: workspace.id, backupId: backup.id, workspaceSlug: workspace.slug }}>
+  const button = document.getElementById('download-backup');
+  const message = document.getElementById('download-message');
+  const deleteButton = document.getElementById('delete-backup');
+
+  button?.addEventListener('click', async () => {
+    message.textContent = 'Creating download link...';
+    message.classList.remove('text-destructive');
+    const response = await fetch(`${apiBaseUrl}/v1/workspaces/${workspaceId}/backups/${backupId}/download-requests`, { method: 'POST', credentials: 'include' });
+    const payload = await response.json();
+    if (!response.ok) {
+      message.textContent = payload.error?.message ?? 'Download link could not be created';
+      message.classList.add('text-destructive');
+      return;
+    }
+    window.location.href = payload.data.download_url;
+  });
+
+  deleteButton?.addEventListener('click', async () => {
+    const confirmed = window.confirm('Delete this Backup? This marks the artifact deleted and blocks future downloads.');
+    if (!confirmed) return;
+    message.textContent = 'Deleting Backup...';
+    message.classList.remove('text-destructive');
+    const response = await fetch(`${apiBaseUrl}/v1/workspaces/${workspaceId}/backups/${backupId}`, { method: 'DELETE', credentials: 'include' });
+    const payload = await response.json();
+    if (!response.ok) {
+      message.textContent = payload.error?.message ?? 'Backup could not be deleted';
+      message.classList.add('text-destructive');
+      return;
+    }
+    window.location.href = `/workspace/${workspaceSlug}/backups`;
+  });
+</script>

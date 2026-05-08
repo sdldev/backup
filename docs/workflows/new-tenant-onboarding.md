@@ -5,7 +5,7 @@
 1. User signs in with Google or GitHub OAuth.
 2. If no Workspace is selected, user sees the Workspace launcher.
 3. User clicks **Create Workspace**.
-4. User enters Workspace name and timezone.
+4. User enters Workspace name, reviews the auto-generated slug (editable before creation), and selects timezone (defaults from browser).
 5. User chooses a Workspace Plan:
    - Basic is self-serve.
    - Pro and Agency are request-access plans.

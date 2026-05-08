@@ -18,6 +18,32 @@ Fields:
 - `last_login_at`
 - `disabled_at` nullable
 
+### sessions
+
+Stores authenticated user sessions.
+
+Fields:
+
+- `id`
+- `user_id`
+- `token_hash` — hashed session token
+- `ip_address` nullable
+- `user_agent` nullable
+- `last_active_at`
+- `expires_at`
+- `invalidated_at` nullable
+- `created_at`
+
+Rules:
+
+- Sessions are stored in Postgres.
+- Session cookies are HTTP-only, Secure, SameSite=Lax, Path=/.
+- Session validation occurs on every authenticated request.
+- Invalidated sessions are rejected immediately.
+- Expired sessions are cleaned up periodically.
+- Maximum 5 active sessions per User Account. When a 6th session is created, the oldest inactive session is automatically invalidated.
+- Disabling a User Account (`users.disabled_at`) invalidates all active sessions for that user immediately.
+
 Rules:
 
 - v1 sign-in uses Google and GitHub OAuth only.
@@ -60,6 +86,11 @@ Rules:
 - API routes use Workspace ID.
 - Workspace deletion is soft-delete first; Backups purge after 7 days.
 - Workspace Owner can restore a deleted Workspace during the 7-day grace period.
+- Slug format: lowercase alphanumeric and hyphens only (`[a-z0-9-]+`), 3-48 characters.
+- Slug is globally unique across all Workspaces (including soft-deleted ones during grace period).
+- Auto-generated from name if not provided, with numeric suffix if taken (e.g., `my-agency-2`).
+- Reserved slugs (rejected on create/update): `admin`, `api`, `auth`, `login`, `logout`, `settings`, `system`, `health`, `status`, `support`, `billing`, `invite`, `download`, `downloads`, `workspace`, `workspaces`, `v1`.
+- Slug changes release the old slug immediately (no redirect/alias in v1).
 
 ### workspace_members
 
@@ -259,6 +290,8 @@ Fields:
 - `created_at`
 - `updated_at`
 - `soft_deleted_at` nullable
+- `schedule_frequency_per_day` — **Phase 2 only; not implemented in Phase 1**
+- `schedule_enabled` — **Phase 2 only; not implemented in Phase 1**
 
 Rules:
 
@@ -350,6 +383,32 @@ Rules:
 - PostgreSQL Backups use `pg_dump -Fc` built-in compression and download as `.dump`.
 - Backup metadata is retained for 1 year after file deletion or expiry.
 
+### download_requests
+
+Stores short-lived download authorization tokens.
+
+Fields:
+
+- `id`
+- `workspace_id`
+- `backup_id`
+- `user_id`
+- `session_id`
+- `token_hash`
+- `expires_at`
+- `used_at` nullable
+- `revoked_at` nullable
+- `created_at`
+
+Rules:
+
+- Download tokens expire after 15 minutes.
+- Download tokens are single-use; `used_at` is set on first successful download.
+- Download tokens are bound to the creating user's session; session must still be valid at download time.
+- System Admin and System Owner cannot create download tokens for customer Backups.
+- Impersonated sessions cannot create download tokens.
+- Revocation is supported for incident response (set `revoked_at`).
+
 ### backup_encryption_keys
 
 Stores wrapped data keys for Backup artifacts.
@@ -371,6 +430,55 @@ Rules:
 - Chunk encryption metadata is stored in the encrypted backup object header.
 - Backup object header is authenticated.
 - Backup object header includes object format version.
+
+### workspace_encryption_keys
+
+Stores wrapped Workspace Encryption Keys.
+
+Fields:
+
+- `id`
+- `workspace_id`
+- `version` — integer, increments on rotation
+- `wrapped_key` — Workspace key encrypted by App Master Key
+- `wrapping_key_id` — identifies which App Master Key version was used
+- `algorithm` — `aes_256_gcm`
+- `created_at`
+- `retired_at` nullable
+
+Rules:
+
+- One active Workspace Encryption Key per Workspace at a time.
+- Workspace Encryption Keys are wrapped by the App Master Key.
+- Key rotation creates a new version; old version is retained until all Backups using it expire.
+- `backup_encryption_keys.workspace_key_version` references this table's `version` field.
+
+## Audit
+
+### audit_events
+
+Stores append-only audit log events.
+
+Fields:
+
+- `id`
+- `workspace_id` nullable — null for platform-level events
+- `actor_user_id` nullable — null for system-initiated events
+- `actor_type` — `user`, `system`, or `impersonated`
+- `event_type` — e.g., `login`, `member.invited`, `credential.updated`, `backup.downloaded`, `backup.deleted`, `source.created`, `impersonation.started`
+- `resource_type` nullable — e.g., `workspace`, `project`, `database_source`, `backup`, `member`
+- `resource_id` nullable
+- `metadata` — JSONB with event-specific details (no secrets logged)
+- `ip_address` nullable
+- `created_at`
+
+Rules:
+
+- Audit events are append-only. No updates or deletes.
+- Workspace-scoped events include `workspace_id`.
+- Platform-level admin events have null `workspace_id`.
+- Credential changes are logged without revealing secret values.
+- Actor identification tracks whether action was direct, system-initiated, or via impersonation.
 
 ## Tenant isolation
 
