@@ -1,0 +1,64 @@
+---
+import { ThemeToggle } from './theme/ThemeToggle';
+import { Button } from './ui/button';
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="404 — Manual Backup Portal">
+  <main class="min-h-screen overflow-hidden bg-background px-6 py-6 text-foreground md:px-10">
+    <nav class="mx-auto flex w-full max-w-6xl items-center justify-between gap-4" aria-label="Main">
+      <a class="grid gap-0.5" href="/">
+        <span class="text-xs font-bold uppercase tracking-[0.24em] text-primary">Manual Backup</span>
+        <span class="text-lg font-semibold tracking-tight">Portal</span>
+      </a>
+      <div class="flex items-center gap-2">
+        <ThemeToggle client:load />
+        <Button asChild>
+          <a href="/login">Sign in</a>
+        </Button>
+      </div>
+    </nav>
+
+    <section class="mx-auto grid min-h-[calc(100vh-5rem)] w-full max-w-6xl items-center gap-10 py-12 lg:grid-cols-[1fr_0.82fr]">
+      <div class="space-y-7">
+        <div class="inline-flex rounded-full border bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">404 • Public route not found</div>
+        <div class="space-y-4">
+          <p class="font-mono text-7xl font-semibold tracking-tight text-primary md:text-8xl">404</p>
+          <h1 class="max-w-2xl text-4xl font-semibold tracking-tight md:text-6xl">Halaman tidak ditemukan.</h1>
+          <p class="max-w-xl text-base leading-7 text-muted-foreground md:text-lg">
+            Link yang kamu buka tidak tersedia atau sudah dipindahkan. Kembali ke halaman utama atau masuk ke Portal untuk melanjutkan pekerjaan Backup.
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-3">
+          <Button asChild size="lg">
+            <a href="/">Back to homepage</a>
+          </Button>
+          <Button asChild variant="outline" size="lg">
+            <a href="/login">Sign in</a>
+          </Button>
+        </div>
+      </div>
+
+      <div class="relative rounded-3xl border bg-card/95 p-5 shadow-xl shadow-slate-950/10 backdrop-blur">
+        <div class="dashboard-hero min-h-[18rem] rounded-2xl border p-6">
+          <div class="relative z-10 grid h-full content-between gap-16">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-[0.22em] text-primary-foreground/70">Route monitor</p>
+              <p class="mt-5 font-mono text-5xl font-semibold">No signal</p>
+            </div>
+            <div class="grid gap-2 text-sm text-primary-foreground/75">
+              <div class="flex items-center justify-between rounded-xl border border-white/10 bg-white/10 px-3 py-2 backdrop-blur">
+                <span>Requested path</span>
+                <span class="font-mono">missing</span>
+              </div>
+              <div class="flex items-center justify-between rounded-xl border border-white/10 bg-white/10 px-3 py-2 backdrop-blur">
+                <span>Status</span>
+                <span class="font-mono">404</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</BaseLayout>

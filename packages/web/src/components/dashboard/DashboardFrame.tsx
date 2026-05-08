@@ -3,6 +3,17 @@ import packageJson from "../../../package.json" with { type: "json" }
 import type { DashboardNavGroup, DashboardNavItem } from "src/lib/dashboard-nav"
 import { ThemeToggle } from "src/components/theme/ThemeToggle"
 import { Avatar, AvatarFallback } from "src/components/ui/avatar"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "src/components/ui/alert-dialog"
 import { Button } from "src/components/ui/button"
 import {
   DropdownMenu,
@@ -212,18 +223,34 @@ function DashboardFrame({
               <span className="sr-only">Notifications</span>
             </Button>
             <ThemeToggle />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:bg-accent hover:text-accent-foreground" aria-label="User account">
-                  <Avatar className="size-7"><AvatarFallback>PO</AvatarFallback></Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuLabel>Portal Online</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild><button type="button" data-logout>Logout</button></DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <AlertDialog>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:bg-accent hover:text-accent-foreground" aria-label="User account">
+                    <Avatar className="size-7"><AvatarFallback>PO</AvatarFallback></Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuLabel>Portal Online</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <AlertDialogTrigger asChild>
+                    <DropdownMenuItem onSelect={(event) => event.preventDefault()}>Logout</DropdownMenuItem>
+                  </AlertDialogTrigger>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Logout dari Portal?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Sesi aktif akan diakhiri. Setelah logout, kamu akan diarahkan ke halaman login.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Batal</AlertDialogCancel>
+                  <AlertDialogAction data-logout>Logout</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </header>
         <main className="w-full p-4 md:p-6 lg:p-7">{children}</main>

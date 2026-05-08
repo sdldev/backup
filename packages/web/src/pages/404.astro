@@ -1,0 +1,34 @@
+---
+import DashboardNotFound from '../components/DashboardNotFound.astro';
+import PublicNotFound from '../components/PublicNotFound.astro';
+import { apiFetch } from '../lib/api';
+import { buildAppNavGroups, buildWorkspaceNavGroups } from '../lib/dashboard-nav';
+
+const pathname = Astro.url.pathname;
+const isDashboardRoute = pathname === '/app' || pathname.startsWith('/app/') || pathname.startsWith('/workspace/');
+let dashboardProps: { navGroups: ReturnType<typeof buildAppNavGroups>; section: string } | null = null;
+
+if (isDashboardRoute) {
+  const sessionResponse = await apiFetch('/v1/session', Astro.request);
+
+  if (sessionResponse.status === 401) {
+    return Astro.redirect('/login');
+  }
+
+  if (sessionResponse.status === 503) {
+    return Astro.redirect('/login?error=api_unavailable');
+  }
+
+  if (!sessionResponse.ok) {
+    return Astro.redirect('/login?error=session_check_failed');
+  }
+
+  const workspaceSlug = pathname.match(/^\/workspace\/([^/]+)/)?.[1];
+  dashboardProps = {
+    navGroups: workspaceSlug ? buildWorkspaceNavGroups(workspaceSlug, pathname) : buildAppNavGroups(pathname),
+    section: workspaceSlug ? 'workspace' : 'admin',
+  };
+}
+---
+
+{dashboardProps ? <DashboardNotFound navGroups={dashboardProps.navGroups} section={dashboardProps.section} /> : <PublicNotFound />}

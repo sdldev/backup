@@ -1,0 +1,62 @@
+---
+import DashboardShell from './DashboardShell.astro';
+import { Button } from './ui/button';
+import type { DashboardNavGroup } from '../lib/dashboard-nav';
+
+const { navGroups, section = 'dashboard' } = Astro.props as {
+  navGroups: DashboardNavGroup[];
+  section?: string;
+};
+---
+
+<DashboardShell
+  brandLabel="Manual Backup"
+  brandName="Portal"
+  pageTitle="Page not found"
+  sidebarNote=""
+  navGroups={navGroups}
+>
+  <section class="grid min-h-[calc(100vh-8rem)] place-items-center">
+    <div class="w-full max-w-4xl rounded-3xl border bg-card/92 p-6 shadow-xl shadow-slate-950/10 backdrop-blur md:p-8">
+      <div class="dashboard-hero rounded-2xl border p-8 md:p-10">
+        <div class="relative z-10 max-w-2xl">
+          <p class="text-sm font-medium text-primary-foreground/75">404 • {section} route</p>
+          <h1 class="mt-5 font-mono text-4xl font-semibold leading-tight tracking-tight md:text-6xl">Halaman dashboard tidak ditemukan.</h1>
+          <p class="mt-5 max-w-xl text-sm leading-6 text-primary-foreground/75 md:text-base">
+            Route ini tidak tersedia di area admin atau workspace. Gunakan navigasi sidebar, kembali ke dashboard, atau buka daftar Workspace.
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-6 grid gap-4 md:grid-cols-[1fr_auto] md:items-center">
+        <div>
+          <h2 class="text-lg font-semibold tracking-tight">Apa yang bisa dilakukan?</h2>
+          <p class="mt-2 text-sm leading-6 text-muted-foreground">Periksa URL, gunakan menu aktif, atau kembali ke halaman utama dashboard.</p>
+        </div>
+        <div class="flex flex-wrap gap-2 md:justify-end">
+          <Button asChild>
+            <a href="/app">Open Dashboard</a>
+          </Button>
+          <Button asChild variant="outline">
+            <a href="/app/workspaces">View Workspaces</a>
+          </Button>
+        </div>
+      </div>
+
+      <div class="mt-6 grid gap-3 rounded-2xl border bg-background/60 p-4 text-sm text-muted-foreground md:grid-cols-3">
+        <div>
+          <p class="font-semibold text-foreground">Status</p>
+          <p class="mt-1 font-mono">404_NOT_FOUND</p>
+        </div>
+        <div>
+          <p class="font-semibold text-foreground">Area</p>
+          <p class="mt-1">Dashboard admin</p>
+        </div>
+        <div>
+          <p class="font-semibold text-foreground">Next</p>
+          <p class="mt-1">Return to safe route</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</DashboardShell>

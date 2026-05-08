@@ -1,41 +1,45 @@
 ---
 import DashboardShell from '../components/DashboardShell.astro';
-import StatCard from '../components/dashboard/StatCard.astro';
-import { Button } from '../components/ui/button';
 import { apiFetch } from '../lib/api';
 import { buildAppNavGroups } from '../lib/dashboard-nav';
 
-const response = await apiFetch('/v1/workspaces', Astro.request);
+const sessionResponse = await apiFetch('/v1/session', Astro.request);
 
-if (response.status === 401) {
+if (sessionResponse.status === 401) {
   return Astro.redirect('/login');
 }
 
-if (response.status === 503) {
+if (sessionResponse.status === 503) {
   return Astro.redirect('/login?error=api_unavailable');
 }
 
-if (!response.ok) {
-  return Astro.redirect('/login?error=workspace_load_failed');
+if (!sessionResponse.ok) {
+  return Astro.redirect('/login?error=session_check_failed');
 }
 
-const payload = (await response.json()) as {
-  data: Array<{
-    workspace: {
-      id: string;
-      name: string;
-      slug: string;
-      storage_status: string;
-      onboarding_step: string;
-    };
-    membership: { role: string };
-    plan: { slug: string; name: string };
-  }>;
-};
+const stats = [
+  { label: 'Active Tasks', value: 8, help: 'Total ongoing tasks', icon: '✓' },
+  { label: 'Active Projects', value: 2, help: 'Ongoing workspace projects', icon: '▣' },
+  { label: 'Team Members', value: 3, help: 'Active workspace users', icon: '👥' },
+  { label: 'Domains Monitored', value: 4, help: 'Currently tracking', icon: '◎' },
+];
 
-const hasRealWorkspaces = payload.data.length > 0;
-const readyStorageCount = payload.data.filter((item) => item.workspace.storage_status === 'ready').length;
-const firstWorkspace = payload.data[0]?.workspace;
+const activities = [
+  { title: 'Q3 Marketing Campaign', meta: 'Projects • Active • Just now' },
+  { title: 'rasionalis.com', meta: 'Domains • Active • 3m ago' },
+  { title: 'warung + pjtki + toko', meta: 'Maps • Completed • 3h ago' },
+  { title: 'cms portal online', meta: 'Serp • Completed • 4h ago' },
+  { title: 'No WhatsApp Campaign', meta: 'WhatsApp • No Data • 01 Jan', muted: true },
+];
+
+const calendarWeeks = [
+  ['28', '29', '30', '31', '1', '2', '3'],
+  ['4', '5', '6', '7', '8', '9', '10'],
+  ['11', '12', '13', '14', '15', '16', '17'],
+  ['18', '19', '20', '21', '22', '23', '24'],
+  ['25', '26', '23', '28', '29', '30', '1'],
+  ['2', '3', '4', '5', '6', '7', '8'],
+];
 ---
 
 <DashboardShell
@@ -45,43 +49,83 @@ const firstWorkspace = payload.data[0]?.workspace;
   sidebarNote=""
   navGroups={buildAppNavGroups(Astro.url.pathname)}
 >
-  <section class="grid gap-5">
-    <div class="dashboard-hero rounded-2xl border p-8 shadow-xl shadow-slate-950/10 md:p-12">
-      <div class="relative z-10 max-w-xl">
-        <p class="text-sm font-medium text-primary-foreground/75">Index Dashboard</p>
-        <h2 class="mt-5 text-4xl font-semibold tracking-tight md:text-5xl">Workspace overview</h2>
-        <p class="mt-5 max-w-lg text-sm leading-6 text-primary-foreground/75">Pilih Workspace untuk masuk ke dashboard tenant, cek kesiapan Backup Storage, dan lanjutkan setup manual Backup.</p>
-      </div>
+  <section class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_17rem]">
+    <div class="grid gap-5">
+      <section class="dashboard-hero min-h-[13.5rem] rounded-2xl border p-8 shadow-xl shadow-slate-950/10 md:p-12" aria-labelledby="dashboard-welcome">
+        <div class="relative z-10 max-w-xl">
+          <p class="text-sm font-medium text-primary-foreground/75">Workspace Command Center</p>
+          <h2 id="dashboard-welcome" class="mt-6 font-mono text-4xl font-semibold leading-tight tracking-tight md:text-5xl">
+            Welcome back,<br />superadmin
+          </h2>
+        </div>
+      </section>
+
+      <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Workspace summary">
+        {stats.map((stat) => (
+          <article class="group rounded-2xl border bg-card/92 p-4 shadow-sm backdrop-blur transition-colors hover:border-primary/35">
+            <div class="flex items-start justify-between gap-4">
+              <h3 class="text-sm font-semibold tracking-tight">{stat.label}</h3>
+              <span class="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/12 text-sm font-semibold text-primary ring-1 ring-primary/15" aria-hidden="true">{stat.icon}</span>
+            </div>
+            <p class="mt-3 text-3xl font-semibold leading-none tracking-tight">{stat.value}</p>
+            <p class="mt-3 text-xs text-muted-foreground">{stat.help}</p>
+          </article>
+        ))}
+      </section>
+
+      <section class="rounded-2xl border bg-card/92 p-5 shadow-sm backdrop-blur" aria-labelledby="recent-activity">
+        <h2 id="recent-activity" class="text-lg font-semibold tracking-tight">Recent Activity</h2>
+        <ol class="mt-5 grid gap-0">
+          {activities.map((activity, index) => (
+            <li class="relative grid grid-cols-[1.5rem_minmax(0,1fr)] gap-3 pb-5 last:pb-0">
+              {index < activities.length - 1 ? <span class="absolute left-[0.43rem] top-4 h-full w-px bg-primary/35" aria-hidden="true"></span> : null}
+              <span class={`relative z-10 mt-1 grid size-3.5 place-items-center rounded-full ring-4 ring-card ${activity.muted ? 'bg-muted-foreground/45' : 'bg-primary'}`} aria-hidden="true">
+                <span class="size-1.5 rounded-full bg-background"></span>
+              </span>
+              <div class="min-w-0">
+                <h3 class="text-sm font-semibold tracking-tight">{activity.title}</h3>
+                <p class="mt-1 text-sm text-muted-foreground">{activity.meta}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
     </div>
 
-    <section class="grid gap-4 md:grid-cols-3" aria-label="Workspace summary">
-      <StatCard label="Total Workspaces" value={payload.data.length}>
-        <p class="text-xs text-muted-foreground">Tenant scopes available</p>
-      </StatCard>
-      <StatCard label="Storage Ready" value={readyStorageCount}>
-        <p class="text-xs text-muted-foreground">Backup Storage provisioned</p>
-      </StatCard>
-      <StatCard label="Active Scope" value="Manual">
-        <p class="text-xs text-muted-foreground">Phase 1 Backup mode</p>
-      </StatCard>
-    </section>
-
-    <section class="grid gap-4 lg:grid-cols-2">
-      <div class="rounded-2xl border bg-card/95 p-5 shadow-sm backdrop-blur ">
-        <h2 class="text-lg font-semibold tracking-tight">Next action</h2>
-        <p class="mt-2 text-sm leading-6 text-muted-foreground">
-          {hasRealWorkspaces ? 'Lanjutkan ke Workspace aktif untuk mengelola Project, Database Source, dan Backup.' : 'Buat Workspace pertama untuk memulai New Tenant Onboarding.'}
-        </p>
-        <div class="mt-5 flex flex-wrap gap-2">
-          <Button asChild><a href={firstWorkspace ? `/workspace/${firstWorkspace.slug}` : '/app/new-workspace'}>{firstWorkspace ? 'Open Workspace' : 'Create Workspace'}</a></Button>
-          <Button asChild variant="secondary"><a href="/app/workspaces">View Workspaces</a></Button>
+    <aside class="grid content-start gap-5">
+      <section class="rounded-2xl border bg-card/92 p-4 shadow-sm backdrop-blur" aria-labelledby="calendar-title">
+        <div class="flex items-center justify-between gap-3">
+          <h2 id="calendar-title" class="text-sm font-semibold tracking-tight">April 2026</h2>
+          <div class="flex gap-1 text-muted-foreground" aria-hidden="true">
+            <span class="grid size-7 place-items-center rounded-md hover:bg-accent">‹</span>
+            <span class="grid size-7 place-items-center rounded-md hover:bg-accent">›</span>
+          </div>
         </div>
-      </div>
+        <div class="mt-5 grid grid-cols-7 gap-y-3 text-center text-xs">
+          {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day) => <span class="text-muted-foreground">{day}</span>)}
+          {calendarWeeks.flat().map((day, index) => {
+            const muted = index < 4 || index > 33;
+            const selected = day === '23' && (index === 26 || index === 30);
+            const dotted = ['23', '29', '4', '5'].includes(day);
+            return (
+              <span class={`relative mx-auto grid size-8 place-items-center rounded-lg ${muted ? 'text-muted-foreground/60' : ''} ${selected ? 'bg-primary/85 text-primary-foreground shadow-sm' : ''}`}>
+                {day}
+                {dotted ? <span class={`absolute bottom-0.5 size-1 rounded-full ${selected ? 'bg-primary-foreground/80' : 'bg-primary/70'}`} aria-hidden="true"></span> : null}
+              </span>
+            );
+          })}
+        </div>
+      </section>
 
-      <div class="rounded-2xl border bg-card/95 p-5 shadow-sm backdrop-blur ">
-        <h2 class="text-lg font-semibold tracking-tight">Backup scope</h2>
-        <p class="mt-2 text-sm leading-6 text-muted-foreground">Phase 1 mendukung manual Backup untuk MySQL-family dan PostgreSQL-family Database Sources. Schedule, notifications, dan webhooks masih Coming soon.</p>
-      </div>
-    </section>
+      <section class="rounded-2xl border bg-card/92 p-4 shadow-sm backdrop-blur" aria-labelledby="upcoming-title">
+        <h2 id="upcoming-title" class="text-base font-semibold tracking-tight">Upcoming Events</h2>
+        <div class="mt-4 border-t pt-4">
+          <p class="flex items-center justify-between gap-3 text-sm">
+            <span class="truncate font-medium">Create wireframes <span class="font-normal text-muted-foreground">- 23 Apr</span></span>
+            <span class="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">Blocked</span>
+          </p>
+        </div>
+      </section>
+    </aside>
   </section>
 </DashboardShell>

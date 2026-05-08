@@ -23,7 +23,8 @@ const { brandLabel, brandName, navItems = [], navGroups, sidebarNote, pageTitle 
   document.addEventListener('click', async (event) => {
     const button = event.target?.closest?.('[data-logout]');
     if (!button) return;
-    await fetch(`${apiBaseUrl}/v1/auth/logout`, { method: 'POST', credentials: 'include' });
-    window.location.href = '/login';
+    button.setAttribute('aria-disabled', 'true');
+    await fetch(`${apiBaseUrl}/v1/auth/logout`, { method: 'POST', credentials: 'include' }).catch(() => null);
+    window.location.assign('/login');
   });
 </script>
